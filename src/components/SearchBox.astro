@@ -1,0 +1,26 @@
+---
+interface Props {
+  id?: string;
+}
+const { id = 'search' } = Astro.props;
+---
+<div id={id} class="search-box"></div>
+
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+<script src="/pagefind/pagefind-ui.js" is:inline></script>
+<script is:inline define:vars={{ id }}>
+  window.addEventListener('DOMContentLoaded', () => {
+    new PagefindUI({ element: `#${id}`, showSubResults: true });
+  });
+</script>
+
+<style>
+  .search-box {
+    --pagefind-ui-primary: var(--accent);
+    --pagefind-ui-text: var(--fg);
+    --pagefind-ui-background: var(--bg);
+    --pagefind-ui-border: var(--border);
+    --pagefind-ui-tag: var(--surface);
+    --pagefind-ui-font: inherit;
+  }
+</style>
