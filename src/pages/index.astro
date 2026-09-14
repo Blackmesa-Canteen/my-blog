@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchBox from '../components/SearchBox.astro';
 
 const posts = (await getCollection('posts')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
@@ -8,6 +9,7 @@ const posts = (await getCollection('posts')).sort(
 ---
 <BaseLayout title="996工人之家">
   <h1>Posts</h1>
+  <SearchBox id="home-search" />
   <ul style="list-style: none; padding: 0; margin: 0;">
     {posts.map((post) => (
       <li class="post-list-item">
