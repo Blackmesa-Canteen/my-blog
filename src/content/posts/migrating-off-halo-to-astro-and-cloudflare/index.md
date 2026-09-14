@@ -36,6 +36,16 @@ own auto-generated post excerpts as a ground truth. Slower than
 reverse-engineering by trial and error, but I'd rather be sure the words on
 this page are the words I actually wrote.
 
+The actual scripts live in this repo, if you're curious or doing the same
+migration yourself:
+[`extract_halo_backup.py`](https://github.com/Blackmesa-Canteen/my-blog/blob/main/scripts/migration/extract_halo_backup.py)
+reconstructs the Markdown + attachments from a Halo backup, and
+[`scaffold_content_collections.py`](https://github.com/Blackmesa-Canteen/my-blog/blob/main/scripts/migration/scaffold_content_collections.py)
+restructures that output into Astro's per-post content-collection layout.
+Both take plain command-line arguments rather than hardcoded paths — see the
+[scripts' README](https://github.com/Blackmesa-Canteen/my-blog/blob/main/scripts/migration/README.md)
+for usage.
+
 Some of the fiddlier bits along the way:
 
 - **292 attachments, 25 with corrupted filenames** — leftovers from an
