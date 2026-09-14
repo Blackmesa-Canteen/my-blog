@@ -48,12 +48,44 @@ npm run build     # production build -> dist/
 npm run preview   # preview the production build locally
 ```
 
+## Workflow
+
+`main` is protected — direct pushes are rejected, including for the repo
+owner. To ship a change (a new post, a config tweak, anything):
+
+```sh
+git checkout -b my-change
+# edit, commit
+git push -u origin my-change
+gh pr create
+```
+
+The PR can only be merged once both required checks pass (see Security
+below). No reviewer approval is required, so once checks are green you can
+merge it yourself.
+
+## Security
+
+Every push and pull request runs `.github/workflows/security.yml`:
+
+- **Secret scan (gitleaks)** — fails the check if a credential/token/key
+  looks like it was committed.
+- **Dependency audit (npm audit)** — fails on high/critical vulnerabilities
+  in dependencies.
+
+Both are required status checks on `main`, so a PR can't merge if either
+fails. **Dependabot** is also enabled on the repo: it opens PRs for
+vulnerable or outdated dependencies (`npm` and the GitHub Actions used in
+this repo) on a weekly schedule, and immediately for security advisories.
+Those PRs go through the same checks as everything else.
+
 ## Deployment
 
 This repo is connected to Cloudflare Pages via its GitHub integration:
-build command `npm run build`, output directory `dist`. Every push to `main`
-deploys automatically; every pull request gets its own preview URL. No
-manual deploy step, no secrets stored in this repo.
+build command `npm run build`, output directory `dist`. Merging a PR into
+`main` (the only way anything reaches `main`) triggers an automatic
+production deploy; every open pull request also gets its own preview URL.
+No manual deploy step, no secrets stored in this repo.
 
 ## Content provenance
 
