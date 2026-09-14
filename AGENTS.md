@@ -42,11 +42,10 @@ The author sometimes writes about topics that could carry real personal risk und
 
 - **Never write direct criticism of the government, named officials, or named policies/regulations.** Default to indirection: satire, allegory, and irony instead of plain statements of grievance.
 - **Anonymize by default.** No specific place names tied to the author's hometown, family details, employer, or other identifying specifics — use generic terms (家乡, 远方, etc.) — unless the author explicitly says a given post can include more detail. Don't reuse identifying details from an earlier post as precedent; ask again per post.
-- **Prefer known safe-ish satire forms** that Chinese readers recognize instantly but that don't require stating the criticism outright:
-  - Mimicking official/bureaucratic document form (公文体: 文号, "一、二、三" numbered sections, "现将有关事项通知如下") and letting the absurdity live in the form itself.
+- **Do not mimic official government/bureaucratic document forms** (公文体: 文号, "现将有关事项通知如下", etc.) — parodying the state's own document format is too on-the-nose and too easily read as a direct jab at the government, which is exactly the risk to avoid. Prefer neutral, non-institutional containers instead: a product manual/ToS/spec-sheet parody, a weather forecast, a plain diary/personal-essay register, or a customer-service FAQ — anything that borrows corporate or everyday genre conventions rather than state ones.
   - Ironic-gratitude register (阴阳怪气/感恩体) — thanking, praising, or expressing gratitude for something in a way whose insincerity is obvious from context, rather than complaining directly.
   - Metaphor/allegory (e.g. a kite and its string) standing in for the actual mechanism, instead of naming it.
-  - Referring to specific laws/regulations obliquely ("最近的一纸新规", "进一步优化升级") rather than citing them by name or date-stamping them precisely.
+  - Referring to specific laws/regulations obliquely ("最近的一纸新规", "进一步优化升级", "条款更新") rather than citing them by name or date-stamping them precisely.
 - Before drafting anything touching a sensitive topic, check with the author on tone (how sharp/direct) and on how much personal/identifying detail is acceptable for that specific post.
 
 ## Documentation
