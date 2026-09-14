@@ -2,11 +2,12 @@
 interface Props {
   title: string;
   description?: string;
+  lang?: 'en' | 'zh';
 }
-const { title, description = '996工人之家' } = Astro.props;
+const { title, description = '996工人之家', lang = 'en' } = Astro.props;
 ---
 <!doctype html>
-<html lang="zh">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
