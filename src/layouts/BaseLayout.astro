@@ -22,9 +22,10 @@ const { title, description = '996工人之家' } = Astro.props;
         <a href="/">Posts</a>
         <a href="/about">About</a>
         <a href="/tea-house">Tea House</a>
+        <a href="/search">Search</a>
       </nav>
     </header>
-    <main>
+    <main data-pagefind-body>
       <slot />
     </main>
     <footer class="site-footer">
@@ -34,22 +35,34 @@ const { title, description = '996工人之家' } = Astro.props;
 </html>
 
 <style is:global>
+  /*
+   * Palette borrowed from the 996-workers-org homepage (SaddleBrown /
+   * Peru / Gold on a beige ground) -- identity only, not the full retro
+   * kitsch: body copy stays a clean sans-serif for readability, the
+   * warm palette carries the brand into headings, links, and accents.
+   */
   :root {
     color-scheme: light dark;
     --max-width: 720px;
-    --fg: #1a1a1a;
-    --bg: #ffffff;
-    --muted: #666666;
-    --accent: #2563eb;
-    --border: #e5e5e5;
+    --fg: #2b2116;
+    --bg: #fefbf3;
+    --muted: #8a7256;
+    --accent: #8b4513;
+    --accent-strong: #cd853f;
+    --highlight: #ffd700;
+    --border: #e6d9c0;
+    --surface: #faf6e9;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --fg: #e6e6e6;
-      --bg: #14161a;
-      --muted: #9aa0a6;
-      --accent: #7aa2ff;
-      --border: #2a2d33;
+      --fg: #f1e6d2;
+      --bg: #1c150d;
+      --muted: #b39d7a;
+      --accent: #e3a458;
+      --accent-strong: #f0c674;
+      --highlight: #f0c674;
+      --border: #4a3a24;
+      --surface: #241b10;
     }
   }
   * { box-sizing: border-box; }
@@ -61,9 +74,10 @@ const { title, description = '996工人之家' } = Astro.props;
     line-height: 1.7;
   }
   a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  a:hover { color: var(--accent-strong); text-decoration: underline; }
   .site-header {
-    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    border-bottom: 2px solid var(--highlight);
   }
   .site-header nav {
     max-width: var(--max-width);
@@ -75,7 +89,7 @@ const { title, description = '996工人之家' } = Astro.props;
   }
   .site-header .brand {
     font-weight: 700;
-    color: var(--fg);
+    color: var(--accent);
     margin-right: auto;
   }
   main {
@@ -84,6 +98,8 @@ const { title, description = '996工人之家' } = Astro.props;
     padding: 2rem 1rem;
     min-height: 60vh;
   }
+  main h1, main h2, main h3 { color: var(--accent); }
+  main h2 { padding-bottom: 0.3rem; border-bottom: 2px solid var(--highlight); }
   main img { max-width: 100%; height: auto; border-radius: 6px; }
   main pre { overflow-x: auto; padding: 1rem; border-radius: 6px; background: #1e1e1e; }
   main code { font-size: 0.9em; }
@@ -105,11 +121,16 @@ const { title, description = '996工人之家' } = Astro.props;
     padding: 1.25rem 0;
     border-bottom: 1px solid var(--border);
   }
-  .post-list-item h2 { margin: 0 0 0.25rem 0; }
+  .post-list-item h2 {
+    margin: 0 0 0.25rem 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
   .tag-list { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
   .tag {
     font-size: 0.8em;
-    color: var(--muted);
+    color: var(--accent-strong);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 999px;
     padding: 0.1rem 0.6rem;
