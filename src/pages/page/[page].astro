@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SearchBox from '../../components/SearchBox.astro';
+import PostList from '../../components/PostList.astro';
+import Pagination from '../../components/Pagination.astro';
+import { getSortedPosts, POSTS_PER_PAGE } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getSortedPosts();
+  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+
+  const paths = [];
+  for (let pageNum = 2; pageNum <= totalPages; pageNum++) {
+    paths.push({
+      params: { page: String(pageNum) },
+      props: {
+        pagePosts: posts.slice((pageNum - 1) * POSTS_PER_PAGE, pageNum * POSTS_PER_PAGE),
+        currentPage: pageNum,
+        totalPages,
+      },
+    });
+  }
+  return paths;
+}
+
+const { pagePosts, currentPage, totalPages } = Astro.props;
+---
+<BaseLayout title={`Posts · page ${currentPage} · 996工人之家`}>
+  <h1>Posts</h1>
+  <SearchBox id="home-search" />
+  <PostList posts={pagePosts} />
+  <Pagination currentPage={currentPage} totalPages={totalPages} />
+</BaseLayout>

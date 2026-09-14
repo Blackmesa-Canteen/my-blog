@@ -1,0 +1,19 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'posts'>[];
+}
+const { posts } = Astro.props;
+---
+<ul style="list-style: none; padding: 0; margin: 0;">
+  {posts.map((post) => (
+    <li class="post-list-item">
+      <h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
+      <p class="post-meta">
+        {post.data.date.toISOString().slice(0, 10)}
+        {post.data.categories.length > 0 && ` · ${post.data.categories.join(', ')}`}
+      </p>
+    </li>
+  ))}
+</ul>
