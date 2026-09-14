@@ -34,11 +34,15 @@ original_permalink: /about
 - 当前目标：把活干好。
 
 ## Information of Deployment
-- SpringBoot + FreeMarker + HTML；
-- Cloudflare + AWS:
+This blog is a fully static site — no application server, no database. All
+content lives as Markdown in the [GitHub repo](https://github.com/Blackmesa-Canteen/996blog).
 
-![996_worker_org_arch.drawio (1).png](./placeholder.png)
-<!-- original image (unavailable): https://blog.cdn.996workers.org/halo/2023/10/996_worker_org_arch.drawio%20(1).png -->
+- **Site generator:** [Astro](https://astro.build) builds the Markdown posts/pages into static HTML at build time.
+- **Search:** [Pagefind](https://pagefind.app) indexes the built HTML during the `postbuild` step and ships a static, client-side search index alongside the site.
+- **CI:** every push and pull request runs a GitHub Actions workflow (gitleaks secret scan + `npm audit`) as a required check before anything can merge into the protected `main` branch.
+- **Hosting:** Cloudflare's Git integration (Workers Builds) watches `main`. It runs `npm run build`, then `wrangler deploy`, which publishes the `dist/` output as static assets on a Cloudflare Worker, served from Cloudflare's global edge network. Every open pull request also gets its own preview deployment.
+
+![Deployment architecture: GitHub Actions checks gate a merge to main, which triggers Cloudflare Workers Builds to build with Astro/Pagefind and deploy with Wrangler, publishing static assets served from Cloudflare's edge network to the visitor's browser.](./deployment-architecture.svg)
 
 ## Contact
 - Email：admin@996workers.org

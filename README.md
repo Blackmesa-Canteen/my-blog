@@ -1,7 +1,7 @@
 # 996blog
 
 Astro-based static blog, migrated from a self-hosted Halo instance. Deployed
-on Cloudflare Pages, built from Markdown in this repo.
+on Cloudflare Workers (static assets), built from Markdown in this repo.
 
 ## Writing a post
 
@@ -81,11 +81,15 @@ Those PRs go through the same checks as everything else.
 
 ## Deployment
 
-This repo is connected to Cloudflare Pages via its GitHub integration:
-build command `npm run build`, output directory `dist`. Merging a PR into
-`main` (the only way anything reaches `main`) triggers an automatic
-production deploy; every open pull request also gets its own preview URL.
-No manual deploy step, no secrets stored in this repo.
+This repo is connected to Cloudflare's Git integration (Workers Builds),
+which deploys static sites through Wrangler rather than through the older
+Pages product. Its build command is `npm run build` (which also runs
+Pagefind over the output via the `postbuild` script), and its deploy
+command is `wrangler deploy`, which publishes `dist/` as the static-assets
+binding described in `wrangler.jsonc`. Merging a PR into `main` (the only
+way anything reaches `main`) triggers an automatic production build and
+deploy; every open pull request also gets its own preview URL. No manual
+deploy step, no secrets stored in this repo.
 
 ## Content provenance
 
