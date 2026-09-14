@@ -1,0 +1,34 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+<BaseLayout title={`${post.data.title} · 996工人之家`}>
+  <article>
+    <h1>{post.data.title}</h1>
+    <p class="post-meta">
+      {post.data.date.toISOString().slice(0, 10)}
+      {post.data.categories.length > 0 && ` · ${post.data.categories.join(', ')}`}
+    </p>
+    {post.data.cover && (
+      <Image src={post.data.cover} alt={post.data.title} width={720} />
+    )}
+    <Content />
+    {post.data.tags.length > 0 && (
+      <p class="tag-list">
+        {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+      </p>
+    )}
+  </article>
+</BaseLayout>

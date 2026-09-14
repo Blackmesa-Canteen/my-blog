@@ -1,0 +1,117 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = '996工人之家' } = Astro.props;
+---
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav>
+        <a class="brand" href="/">996工人之家</a>
+        <a href="/">Posts</a>
+        <a href="/about">About</a>
+        <a href="/tea-house">Tea House</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>&copy; {new Date().getFullYear()} 996工人之家</p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    color-scheme: light dark;
+    --max-width: 720px;
+    --fg: #1a1a1a;
+    --bg: #ffffff;
+    --muted: #666666;
+    --accent: #2563eb;
+    --border: #e5e5e5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e6e6e6;
+      --bg: #14161a;
+      --muted: #9aa0a6;
+      --accent: #7aa2ff;
+      --border: #2a2d33;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { padding: 0; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Noto Sans SC', sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.7;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .site-header {
+    border-bottom: 1px solid var(--border);
+  }
+  .site-header nav {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 1rem;
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+  }
+  .site-header .brand {
+    font-weight: 700;
+    color: var(--fg);
+    margin-right: auto;
+  }
+  main {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    min-height: 60vh;
+  }
+  main img { max-width: 100%; height: auto; border-radius: 6px; }
+  main pre { overflow-x: auto; padding: 1rem; border-radius: 6px; background: #1e1e1e; }
+  main code { font-size: 0.9em; }
+  main pre code { background: none; }
+  .site-footer {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    color: var(--muted);
+    font-size: 0.9em;
+    border-top: 1px solid var(--border);
+  }
+  .post-meta {
+    color: var(--muted);
+    font-size: 0.9em;
+    margin-bottom: 1.5rem;
+  }
+  .post-list-item {
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .post-list-item h2 { margin: 0 0 0.25rem 0; }
+  .tag-list { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .tag {
+    font-size: 0.8em;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+  }
+</style>
