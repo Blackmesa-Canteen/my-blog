@@ -18,7 +18,24 @@ original_permalink: /archives/advanceddatabasesystemcheatsheet
 
 ### Keywords: Disk access time, Memory access time, SSD, Moore's law, Joy's law, Database archtecture
 
-![avatar](./placeholder.png)
+<svg data-diagram viewBox="0 0 560 210" role="img" aria-label="Disk access time breakdown: HDD is seek plus rotational plus transfer; SSD is transfer only">
+  <text x="10" y="22" class="d-title">HDD access time</text>
+  <rect x="10" y="34" width="140" height="40" class="d-box"/>
+  <text x="80" y="58" text-anchor="middle">Seek</text>
+  <rect x="150" y="34" width="140" height="40" class="d-box"/>
+  <text x="220" y="58" text-anchor="middle">Rotational</text>
+  <rect x="290" y="34" width="140" height="40" class="d-box"/>
+  <text x="360" y="58" text-anchor="middle">Transfer</text>
+  <path d="M430 54 H450" class="d-line"/>
+  <polygon points="450,49 460,54 450,59" class="d-arrow"/>
+  <text x="500" y="58" text-anchor="middle" class="d-mono">sum</text>
+  <line x1="10" y1="92" x2="430" y2="92" class="d-line-muted"/>
+  <text x="220" y="110" text-anchor="middle" class="d-label">seek time + rotational time + transfer length / bandwidth</text>
+  <text x="10" y="150" class="d-title">SSD access time</text>
+  <rect x="10" y="162" width="420" height="30" class="d-box-alt"/>
+  <text x="220" y="182" text-anchor="middle">Transfer</text>
+  <text x="220" y="202" text-anchor="middle" class="d-label">transfer length / bandwidth (no seek, no rotation)</text>
+</svg>
 <!-- original image (unavailable): https://raw.githubusercontent.com/Blackmesa-Canteen/2021s1final/master/pic/disk.png -->
 
 ### Disk Access time
