@@ -7,9 +7,7 @@ original_permalink: /archives/shader-compilation-nvidia-band-aid
 
 # Shader Compilation: Nvidia's Band-Aid on a Self-Inflicted Wound
 
-Everyone is celebrating Nvidia's new shader precompilation feature like it's some kind of engineering miracle. *Pretty good...* I suppose. Except we're all conveniently forgetting to ask the uncomfortable question: Why are we compiling shaders at runtime in 2026 in the first place?
-
-Let me reload during this battle.
+Everyone is celebrating Nvidia's new shader precompilation feature like it's some kind of engineering miracle. Fine, I suppose. Except we're all conveniently forgetting to ask the uncomfortable question: why are we compiling shaders at runtime in 2026 in the first place?
 
 ## The Stutter No One Wants to Talk About
 
@@ -43,7 +41,7 @@ The industry collectively decided that **runtime compilation** was the path forw
 
 Nvidia's approach is pragmatic. If you're going to stutter anyway, at least stutter when you're not playing. The Nvidia App monitors your library, detects installed games, and precompiles PSOs during idle CPU time—when you're AFK, browsing Reddit, or pretending to work.
 
-From a technical standpoint, it's *pretty good*. They're essentially running the same compilation pipeline the driver would execute at runtime, but doing it preemptively. Store the results in a persistent cache, and when you actually launch the game, those PSOs are already baked and ready.
+From a technical standpoint, it's solid work. They're essentially running the same compilation pipeline the driver would execute at runtime, but doing it preemptively. Store the results in a persistent cache, and when you actually launch the game, those PSOs are already baked and ready.
 
 **Tradeoffs:**
 - **Storage**: PSO caches can be gigabytes per game. Hope you weren't attached to that SSD space.
@@ -57,7 +55,7 @@ It works, but it's solving a symptom, not the disease.
 
 Nvidia isn't the first to try fixing this. Let's tour the graveyard of partial solutions.
 
-**DirectX 12 and Vulkan PSO caching**: Both APIs allow drivers to cache compiled pipeline states. *Pretty good...* except the cache is volatile, often invalidated by driver updates, and doesn't help first-run stutter.
+**DirectX 12 and Vulkan PSO caching**: Both APIs allow drivers to cache compiled pipeline states. It helps, except the cache is volatile, often invalidated by driver updates, and doesn't help first-run stutter.
 
 **Valve's Fossilize**: Part of Proton (the Linux translation layer for Windows games), Fossilize precompiles shaders by crowdsourcing PSO usage data from players. When you install a game on Steam Deck, it downloads pre-baked shaders based on what other users encountered. Clever. Effective. Also completely reliant on Valve's infrastructure and Linux-only.
 
@@ -102,7 +100,3 @@ For the industry? It's a Band-Aid on a bullet wound. We're celebrating a fix for
 I appreciate the engineering. I really do. But I can't shake the feeling that we're all complicit in pretending this is normal. Shader compilation stutter *shouldn't exist*. The fact that we need idle-time precompilation, crowdsourced shader caches, and driver-level workarounds is an admission that somewhere along the way, we chose API purity over user experience.
 
 And now we're loading our silver bullets into the chamber one background compile at a time, hoping no one notices we're the ones who pulled the trigger.
-
-**Pretty good.**
-
-— O

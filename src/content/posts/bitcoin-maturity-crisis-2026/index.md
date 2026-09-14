@@ -68,5 +68,3 @@ Bitcoin is maturing. Maturity means accepting trade-offs. It means negotiating w
 That might be the right choice. But it is a choice. And those of us who remember why Bitcoin mattered in the first place should be clear-eyed about what's being traded away.
 
 The revolution isn't being defeated. It's being domesticated. And in 2026, the question isn't whether you can buy Bitcoin—it's whether Bitcoin, as it exists today, can still buy you freedom.
-
-— E
