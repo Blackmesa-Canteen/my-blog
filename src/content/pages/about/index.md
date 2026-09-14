@@ -43,7 +43,6 @@ original_permalink: /about
 ## Contact
 - Email：admin@996workers.org
 - Github：https://github.com/Blackmesa-Canteen
-- LinkedIn：https://www.linkedin.com/in/xiaotian-li-063821208
 - I have joined the [友链接力项目](https://github.com/volfclub/travellings). I am happy to share knowledge and support an open Internet.
 
 

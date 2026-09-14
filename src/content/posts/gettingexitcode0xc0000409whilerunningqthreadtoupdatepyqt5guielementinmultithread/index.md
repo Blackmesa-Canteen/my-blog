@@ -52,7 +52,7 @@ class DemoAsyncHandler:
 
         on_failure: [Optional] It is not necessary to have this param, depend on the situation
 
-        Author Xiaotian Li
+        Author Blackmesa-Canteen
         """
 
         # init helper thread
@@ -118,7 +118,7 @@ class DemoFrameController(QWidget):
 
         :return: null
 
-        author: Xiaotian Li
+        author: Blackmesa-Canteen
         """
         user_input = self.__ui.Edit0.text()
 
@@ -219,7 +219,7 @@ class DemoAsyncHandler:
 
         on_failure: [Optional] It is not necessary to have this param, depend on the situation
 
-        Author Xiaotian Li
+        Author Blackmesa-Canteen
         """
 
         # init helper thread
@@ -285,7 +285,7 @@ class DemoFrameController(QWidget):
 
         :return: null
 
-        author: Xiaotian Li
+        author: Blackmesa-Canteen
         """
         user_input = self.__ui.Edit0.text()
 
