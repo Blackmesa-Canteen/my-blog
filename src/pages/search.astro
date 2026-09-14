@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Search · 996工人之家">
+  <h1>Search</h1>
+  <div id="search"></div>
+</BaseLayout>
+
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+<script src="/pagefind/pagefind-ui.js" is:inline></script>
+<script is:inline>
+  window.addEventListener('DOMContentLoaded', () => {
+    new PagefindUI({ element: '#search', showSubResults: true });
+  });
+</script>
+
+<style>
+  :root {
+    --pagefind-ui-primary: var(--accent);
+    --pagefind-ui-text: var(--fg);
+    --pagefind-ui-background: var(--bg);
+    --pagefind-ui-border: var(--border);
+    --pagefind-ui-tag: var(--surface);
+    --pagefind-ui-font: inherit;
+  }
+</style>
