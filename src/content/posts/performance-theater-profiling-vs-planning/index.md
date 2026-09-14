@@ -17,8 +17,6 @@ Here's how it always goes: Your application is slow. Someone opens up a profiler
 
 Why? Because profiling is forensics for architectural mistakes that were made six months ago. You're treating performance like a bug when it's actually a design constraint.
 
-Pretty good, right? Wrong.
-
 ## What You're Actually Doing
 
 Let me be clear: profiling isn't useless. Profiling is *reactive*. It tells you where your code is spending time, not whether you designed a system that can scale under your actual load. You're diagnosing symptoms while ignoring the disease.
@@ -140,7 +138,3 @@ So here's my challenge: next time someone suggests profiling to fix a performanc
 3. Is profiling going to solve an architectural mistake, or tune an already-sound design?
 
 If the answer to the first two is "no," put down the profiler. You have bigger problems.
-
-Pretty good.
-
-— O

@@ -1,81 +1,50 @@
 ---
-title: Why Object Storage Is Secretly Your Next Database (And You're In Denial About
-  It)
+title: Why Object Storage Is Quietly Becoming Your Data Warehouse
 slug: object-storage-secret-database
 date: '2026-03-01T12:11:28.405169430Z'
 original_permalink: /archives/object-storage-secret-database
 ---
 
-### Why Object Storage Is Secretly Your Next Database (And You're In Denial About It)
+### Why Object Storage Is Quietly Becoming Your Data Warehouse
 
-Let me ask you something: when was the last time you heard someone say, "Yeah, we're just throwing everything into S3 and calling it a data warehouse"? Never, right? Because that sounds ridiculous. Except—and this is the part that's quietly driving DBAs insane—it's exactly what's happening across the industry.
+Nobody wants to admit it out loud, but a lot of teams are effectively running their analytics warehouse out of S3 and calling it a "data lake" so it doesn't sound ridiculous. Parquet plus object storage is eating into traditional OLAP databases, and the people least willing to say so are the ones still paying six-figure licenses to the vendors it's replacing.
 
-The cloud storage revolution has pulled off a neat trick: we've gone from files, to databases, to... back to files again. But smarter. Parquet + S3 is eating traditional OLAP databases alive, and the only people who won't admit it are the ones paying six-figure licensing fees to legacy vendors.
+### From files, to databases, and back to files
 
-This isn't speculation. This is architectural inevitability. Let me show you why.
+For decades the pattern was simple: if you had structured data, it went in a relational database — ACID guarantees, transactions, the whole package. Then big data workloads showed up and didn't need most of that. Analytics queries don't need row-level transactions; they need to scan a lot of data fast. Columnar formats like Parquet exist for exactly this: store by column, compress hard, and make scans cheap.
 
-### The Architectural Shift: From Files to Databases to Files (But This Time With Finesse)
+The interesting part is that Parquet doesn't need a database wrapped around it. It's just files, and you can query them directly out of S3.
 
-In the beginning, there were files. Glorious, simple files stored on disk or tape. Then applications got complicated, and we invented relational databases—ACID guarantees, transactional integrity, the whole nine yards. For decades, if you wanted structured data, you put it in a database. End of story.
+### Why this replaces OLAP databases for a lot of workloads
 
-But then big data arrived and broke everything. Suddenly, strict ACID semantics became optional. Scalability trumped consistency. Analytics workloads didn't need row-level transactions; they needed to scan petabytes of data in seconds. Enter columnar formats like Parquet—storing data by column instead of row, compressing like crazy, and making analytical queries scream.
+Take a typical pipeline: millions of log events a day. The old approach is ingest into a warehouse (Snowflake, BigQuery, pick one), transform, query, and pay for compute whether you're using it or not.
 
-Here's where it gets interesting: Parquet doesn't need a database. It's just files. Really smart files that you can dump into S3 and query directly. No intermediate database layer. No vendor lock-in. No license negotiations.
+The alternative: land raw logs in S3, process with Spark into Parquet, write the Parquet back to S3, query with Athena or Trino. Cost is mostly storage plus the compute you actually use — no idle cluster burning money overnight. For most analytical workloads the performance is comparable to a dedicated OLAP system, and the cost difference is not small.
 
-You see where this is going.
+### Iceberg and Delta Lake fill the gap that kept this in "batch only" territory
 
-### Why Parquet + S3 Is Devouring Traditional OLAP Databases
+Raw Parquet files can't be updated transactionally, can't be time-traveled, and make schema evolution painful. That's what kept object storage confined to batch processing for years. Apache Iceberg and Delta Lake fix this by sitting on top of Parquet in S3 and providing the transactional layer a database would normally give you: ACID semantics, schema evolution without rewriting terabytes, time-travel queries.
 
-Consider a typical data pipeline. You've got logs from your web app flooding in—millions of events per day. The old playbook says: ingest into a data warehouse (Snowflake, BigQuery, whatever), transform it, query it, pay through the nose for compute and storage.
+Iceberg came out of Netflix and is now an Apache project — solid metadata management and partition pruning that actually works. Delta Lake, from Databricks, adds streaming integration and optimistic concurrency control. Once you have transactions and analytics on object storage, the case for a proprietary warehouse gets a lot narrower.
 
-The new playbook? Dump raw logs into S3. Process them with Spark into Parquet. Store Parquet back in S3. Query directly with Athena or Trino. Total warehouse cost: basically storage plus whatever compute you actually use. No idle cluster burning money at 3 AM.
+### The tradeoffs that don't make it into the blog posts
 
-This isn't theoretical. Companies are doing this at massive scale. The performance is comparable to dedicated OLAP systems for most analytical workloads. The cost difference? Orders of magnitude.
+This isn't free. A few things bite people in practice:
 
-But wait—there's a catch. (There's always a catch.)
+- **Cold storage kills latency.** Moving data to glacier-tier storage saves pennies but adds retrieval delay that will wreck query performance if you need sub-second responses. You end up paying for hot storage anyway.
+- **Network becomes the bottleneck instead of disk.** Traditional databases optimize for local SSD reads. Object stores add a network hop to every query. Fine for small datasets, painful for petabyte-scale cross-region joins.
+- **Query optimization is still catching up.** Iceberg and friends are improving fast, but they're not yet as sophisticated as a mature OLAP engine on complex joins, window functions, and nested aggregations.
 
-### Open Table Formats: Iceberg and Delta Lake as the Transaction Layer
+Most people ignoring these tradeoffs simply haven't hit scale yet.
 
-Parquet files are great, but they're still just files. You can't update them transactionally. You can't time-travel through historical versions. Schema evolution is a nightmare. For years, this limitation kept object storage firmly in the "batch processing" box.
+### Where this pattern breaks
 
-Then Apache Iceberg and Delta Lake showed up and changed the game. These open table formats sit on top of Parquet files in S3 and provide the transactional layer everyone thought you needed a database for. ACID properties? Check. Schema evolution without rewriting terabytes? Check. Time travel queries to see data as it existed yesterday? Also check.
+- **High-frequency transactional updates** — object stores are append-heavy by design. Row-level updates with immediate consistency requirements need a real OLTP database.
+- **Petabyte-scale metadata management** — partition pruning, schema evolution, and compaction at real scale is genuinely hard operational work. Iceberg and Delta Lake help, but you still own the complexity a managed warehouse would have absorbed for you.
+- **Data locality** — traditional warehouses plan queries around where data physically sits. Separating compute from storage is great for elasticity and bad for certain access patterns.
 
-Iceberg, out of Netflix and now an Apache project, gives you scalable metadata management and partition pruning that actually works. Delta Lake, from Databricks, adds real-time streaming integration and optimistic concurrency control. Both let you treat object storage like a proper database—except infinitely cheaper and more scalable.
+When you hit these limits, it's obvious: queries crawl, metadata operations time out, and you're back to pricing out Snowflake.
 
-This is the part that makes traditional database vendors nervous. Because once you have transactions + analytics on cheap object storage, what exactly are you paying them for?
+### Where it lands
 
-### Performance Tradeoffs Nobody Talks About
-
-Of course, I'd be lying if I said this was all upside. There are tradeoffs, and they're non-trivial.
-
-**Cold storage kills you on latency.** Moving data to glacier-tier storage saves pennies but introduces retrieval delays that can ruin query performance. If your workload needs sub-second response times, you're paying for hot storage anyway.
-
-**Network is the new disk bottleneck.** Traditional databases optimize for local SSD reads. Object stores introduce network hops on every query. For small datasets, this is fine. For petabyte-scale joins across regions? You better have a thick pipe and patience.
-
-**Query optimization is still immature.** Tools like Iceberg are improving, but they're nowhere near the sophistication of a battle-tested OLAP engine. Complex joins, window functions, nested aggregations—these still perform better in systems purpose-built for them.
-
-And here's the dirty secret: most people ignoring these tradeoffs haven't hit scale yet. When they do, they'll discover why Snowflake still exists.
-
-### When This Approach Fails Catastrophically (And It Will)
-
-Let's be clear: object storage isn't a panacea. There are workloads where this pattern falls apart spectacularly.
-
-**High-frequency transactional updates?** Forget it. Object stores are append-heavy by design. If your use case involves constant row-level updates with immediate consistency requirements, you need a real OLTP database. S3 will laugh at you.
-
-**Petabyte-scale metadata management?** Managing partition pruning, schema evolution, and compaction at massive scale is harder than it looks. Iceberg and Delta Lake help, but you're still on the hook for operational complexity that managed warehouses abstract away.
-
-**Data locality and compute co-location?** Traditional warehouses optimize query plans based on where data physically lives. Object storage separates compute and storage entirely, which is great for elasticity but brutal for certain access patterns.
-
-When these limitations hit, you'll know. Your queries will slow to a crawl. Metadata operations will time out. And you'll quietly start evaluating Snowflake pricing again.
-
-### Conclusion
-
-So here we are, watching object storage quietly become the de facto data warehouse for a huge swath of use cases—while everyone pretends they're just using it for "intermediate storage" or "data lakes."
-
-The truth is messier. Parquet + S3 + Iceberg/Delta Lake democratized data warehousing. It made scalable analytics accessible without selling your soul to enterprise vendors. But it also introduced new failure modes, operational complexity, and performance ceilings that catch people off guard.
-
-There's no silver bullet. Every architecture is a set of tradeoffs. The question isn't whether object storage will replace traditional warehouses—it's which workloads migrate first, and which stay put because the cost of being wrong is too high.
-
-Choose wisely. Or don't. Either way, S3's getting bigger.
-
-Pretty good. — O
+Parquet, S3, and Iceberg or Delta Lake made scalable analytics accessible without a seven-figure vendor contract. That's real. It also comes with new failure modes and an operational complexity bill that used to be someone else's problem. There's no universal answer here — the question isn't whether object storage replaces the traditional warehouse, it's which workloads move first, and which stay put because being wrong there is too expensive.

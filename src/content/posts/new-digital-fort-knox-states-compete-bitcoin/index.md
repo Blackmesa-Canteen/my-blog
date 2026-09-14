@@ -50,5 +50,3 @@ Perhaps the deepest irony is this: Bitcoin was designed to weaken the state's mo
 The Strategic Bitcoin Reserve, whether federal or state-level, is not a defeat for Bitcoin's principles. It's a recognition that those principles have consequences. Scarcity has value. Decentralization has utility. And governments, pragmatic as ever, will adopt whatever tools help them maintain relevance in a changing world.
 
 We're watching the birth of digital sovereignty. The question now is whether this strengthens states at the expense of individuals, or whether it simply marks the next phase of a much longer transition—one where money itself becomes a technology too useful to ignore, regardless of who invented it or why.
-
-— E
