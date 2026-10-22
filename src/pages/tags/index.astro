@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSortedPosts, getTerms, termHref } from '../../lib/posts';
+import Bi from '../../components/Bi.astro';
 
 const posts = await getSortedPosts();
 const categories = getTerms(posts, 'categories');
@@ -8,21 +9,24 @@ const tags = getTerms(posts, 'tags');
 const byName = [...tags].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
 ---
 <BaseLayout
+  wide
   title="Categories & Tags · 996工人之家"
   description={`Browse 996工人之家 by ${categories.length} categories and ${tags.length} tags.`}
   searchable={false}
 >
-  <h1>Categories &amp; Tags</h1>
-  <h2>Categories</h2>
+  <div class="page-wide">
+  <h1><Bi zh="分类与标签" en="Categories & Tags" /></h1>
+  <h2><Bi zh="分类" en="Categories" /></h2>
   <ul class="count-list count-grid">
     {categories.map((term) => (
       <li><a href={termHref('categories', term.name)}>{term.name}</a><span class="count">{term.count}</span></li>
     ))}
   </ul>
-  <h2>Tags <span class="heading-count">{tags.length}</span></h2>
+  <h2><Bi zh="标签" en="Tags" /> <span class="heading-count">{tags.length}</span></h2>
   <ul class="count-list count-grid">
     {byName.map((term) => (
       <li><a href={termHref('tags', term.name)}>#{term.name}</a><span class="count">{term.count}</span></li>
     ))}
   </ul>
+  </div>
 </BaseLayout>

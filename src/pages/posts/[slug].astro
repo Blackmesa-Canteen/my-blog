@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Toc from '../../components/Toc.astro';
+import Bi from '../../components/Bi.astro';
 import { detectLang } from '../../lib/lang';
 import { getExcerpt } from '../../lib/posts';
 import { SITE } from '../../lib/site';
@@ -22,7 +23,6 @@ const lang = detectLang(`${post.data.title}\n${post.body ?? ''}`);
 // h2/h3 only; a TOC for one or two headings is just clutter.
 const tocHeadings = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 const showToc = tocHeadings.length >= 3;
-const tocLabel = lang === 'zh' ? '目录' : 'Contents';
 
 const description = getExcerpt(post) || SITE.description;
 const url = new URL(`/posts/${post.id}/`, Astro.site).href;
@@ -58,7 +58,7 @@ const jsonLd = {
   <div class:list={['post-layout', { 'has-toc': showToc }]}>
     {showToc && (
       <aside class="toc-sidebar">
-        <p class="toc-title">{tocLabel}</p>
+        <p class="toc-title"><Bi zh="目录" en="Contents" /></p>
         <Toc headings={tocHeadings} lang={lang} />
       </aside>
     )}
@@ -70,7 +70,7 @@ const jsonLd = {
       </p>
       {showToc && (
         <details class="toc-inline">
-          <summary>{tocLabel}</summary>
+          <summary><Bi zh="目录" en="Contents" /></summary>
           <Toc headings={tocHeadings} lang={lang} topLevelOnly={tocHeadings.length > 30} />
         </details>
       )}
@@ -85,7 +85,7 @@ const jsonLd = {
       )}
     </article>
   </div>
-  <a href="#top" class="back-to-top" aria-label={lang === 'zh' ? '回到顶部' : 'Back to top'} data-pagefind-ignore>↑</a>
+  <a href="#top" class="back-to-top" aria-label="回到顶部 Back to top" data-pagefind-ignore>↑</a>
 </BaseLayout>
 
 <script>

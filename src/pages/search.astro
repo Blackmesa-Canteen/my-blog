@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SearchBox from '../components/SearchBox.astro';
+import Bi from '../components/Bi.astro';
 ---
 <BaseLayout title="Search · 996工人之家" searchable={false} noindex>
-  <h1>Search</h1>
+  <h1><Bi zh="搜索" en="Search" /></h1>
   <SearchBox primary />
 </BaseLayout>

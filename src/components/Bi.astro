@@ -1,0 +1,14 @@
+---
+/**
+ * Bilingual label: Chinese first (primary), English after it, smaller and
+ * muted. `stack` puts English on a second line (header nav), otherwise both
+ * sit on one line (headings, sidebar titles, buttons).
+ */
+interface Props {
+  zh: string;
+  en: string;
+  stack?: boolean;
+}
+const { zh, en, stack = false } = Astro.props;
+---
+<span class:list={['bi', { 'bi-stack': stack }]}><span class="bi-zh" lang="zh">{zh}</span><span class="bi-en" lang="en">{en}</span></span>
