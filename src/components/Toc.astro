@@ -1,0 +1,40 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+  lang: 'en' | 'zh';
+  /** Render top-level entries only (used by the inline mobile TOC on very long posts). */
+  topLevelOnly?: boolean;
+}
+
+const { headings, lang, topLevelOnly = false } = Astro.props;
+
+// Top level is whatever the shallowest heading is (some posts start at h3);
+// only one level below it is shown, deeper headings would just be noise.
+const topDepth = Math.min(...headings.map((h) => h.depth));
+type Entry = MarkdownHeading & { children: MarkdownHeading[] };
+const entries: Entry[] = [];
+for (const h of headings) {
+  if (h.depth === topDepth) entries.push({ ...h, children: [] });
+  else if (h.depth === topDepth + 1 && entries.length > 0 && !topLevelOnly) {
+    entries[entries.length - 1].children.push(h);
+  }
+}
+---
+<nav class="toc" aria-label={lang === 'zh' ? '目录' : 'Contents'} data-pagefind-ignore>
+  <ol>
+    {entries.map((entry) => (
+      <li data-toc-section={entry.slug}>
+        <a href={`#${entry.slug}`} data-toc-link={entry.slug}>{entry.text}</a>
+        {entry.children.length > 0 && (
+          <ol>
+            {entry.children.map((child) => (
+              <li><a href={`#${child.slug}`} data-toc-link={child.slug}>{child.text}</a></li>
+            ))}
+          </ol>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
