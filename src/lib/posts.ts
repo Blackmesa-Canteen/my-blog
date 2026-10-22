@@ -68,7 +68,7 @@ export function groupByYear(posts: Post[]) {
  * A plain-text teaser from the start of a post's Markdown: skips headings,
  * code, tables, HTML/SVG and a leading cross-language note, keeps prose.
  */
-export function getExcerpt(post: Post, maxLength = 160) {
+export function getExcerpt(post: { body?: string }, maxLength = 160) {
   const text = (post.body ?? '')
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/<svg[\s\S]*?<\/svg>/gi, ' ')

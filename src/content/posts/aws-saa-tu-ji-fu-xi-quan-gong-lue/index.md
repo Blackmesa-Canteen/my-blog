@@ -10,7 +10,7 @@ tags:
 - Notes
 ---
 
-> English version: [AWS SAA Crash Review Guide](/posts/aws-saa-crash-review-guide)
+> English version: [AWS SAA Crash Review Guide](/posts/aws-saa-crash-review-guide/)
 
 ## 考試概覽與答題技巧
 
