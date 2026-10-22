@@ -6,16 +6,39 @@ interface Props {
 const { currentPage, totalPages } = Astro.props;
 
 const pageHref = (page: number) => (page === 1 ? '/' : `/page/${page}/`);
+
+// First, last, and two either side of the current page; gaps become "…".
+const shown = [...new Set([1, currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2, totalPages])]
+  .filter((page) => page >= 1 && page <= totalPages)
+  .sort((a, b) => a - b);
+const items: (number | 'gap')[] = [];
+for (const page of shown) {
+  const prev = items[items.length - 1];
+  if (typeof prev === 'number' && page - prev > 1) items.push(page - prev === 2 ? prev + 1 : 'gap');
+  items.push(page);
+}
 ---
 {totalPages > 1 && (
   <nav class="pagination" aria-label="Pagination">
     {currentPage > 1 ? (
-      <a href={pageHref(currentPage - 1)} rel="prev">&larr; Newer</a>
-    ) : <span />}
-    <span class="pagination-status">Page {currentPage} of {totalPages}</span>
+      <a class="pagination-step" href={pageHref(currentPage - 1)} rel="prev">&larr; Newer</a>
+    ) : <span class="pagination-step" aria-hidden="true" />}
+    <ol class="pagination-pages">
+      {items.map((item) => item === 'gap' ? (
+        <li class="pagination-gap" aria-hidden="true">…</li>
+      ) : (
+        <li>
+          {item === currentPage ? (
+            <span class="pagination-page current" aria-current="page" data-total={totalPages}>{item}</span>
+          ) : (
+            <a class="pagination-page" href={pageHref(item)} aria-label={`Page ${item}`}>{item}</a>
+          )}
+        </li>
+      ))}
+    </ol>
     {currentPage < totalPages ? (
-      <a href={pageHref(currentPage + 1)} rel="next">Older &rarr;</a>
-    ) : <span />}
+      <a class="pagination-step" href={pageHref(currentPage + 1)} rel="next">Older &rarr;</a>
+    ) : <span class="pagination-step" aria-hidden="true" />}
   </nav>
 )}
 
@@ -29,8 +52,31 @@ const pageHref = (page: number) => (page === 1 ? '/' : `/page/${page}/`);
     padding-top: 1.5rem;
     border-top: 1px solid var(--border);
   }
-  .pagination-status {
-    color: var(--muted);
-    font-size: 0.9em;
+  .pagination-step { min-width: 5.5rem; white-space: nowrap; }
+  .pagination-step:last-child { text-align: right; }
+  .pagination-pages {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .pagination-page {
+    display: grid;
+    place-items: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.4rem;
+    border-radius: 6px;
+    font-size: 0.95em;
+  }
+  a.pagination-page:hover { background: var(--surface); text-decoration: none; }
+  .pagination-page.current { background: var(--accent); color: var(--bg); font-weight: 600; }
+  .pagination-gap { display: grid; place-items: center; min-width: 1.5rem; color: var(--muted); }
+  @media (max-width: 560px) {
+    /* Numbers only on phones would be too cramped next to the arrows; keep the
+       arrows and a compact "n / total" instead. */
+    .pagination-pages li:not(:has(.current)) { display: none; }
+    .pagination-page.current::after { content: ' / ' attr(data-total); }
   }
 </style>

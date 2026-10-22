@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Not found · 996工人之家" searchable={false}>
+  <h1>404</h1>
+  <p>This page doesn't exist, or it moved when the blog left Halo.</p>
+  <ul>
+    <li><a id="search-for-path" href="/search/">Search the blog</a></li>
+    <li><a href="/archive/">Browse every post by year</a></li>
+    <li><a href="/">Back to the latest posts</a></li>
+  </ul>
+  <script>
+    // Old Halo URLs end in a readable slug; offer it as the search query.
+    const words = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() ?? '').replace(/[-_]+/g, ' ').trim();
+    const link = document.getElementById('search-for-path') as HTMLAnchorElement | null;
+    if (link && words) {
+      link.href = `/search/?q=${encodeURIComponent(words)}`;
+      link.textContent = `Search the blog for “${words}”`;
+    }
+  </script>
+</BaseLayout>

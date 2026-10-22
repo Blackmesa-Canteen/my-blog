@@ -1,19 +1,34 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { getExcerpt, termHref } from '../lib/posts';
 
 interface Props {
   posts: CollectionEntry<'posts'>[];
 }
 const { posts } = Astro.props;
 ---
-<ul style="list-style: none; padding: 0; margin: 0;">
-  {posts.map((post) => (
-    <li class="post-list-item">
-      <h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
-      <p class="post-meta">
-        {post.data.date.toISOString().slice(0, 10)}
-        {post.data.categories.length > 0 && ` · ${post.data.categories.join(', ')}`}
-      </p>
-    </li>
-  ))}
+<ul class="post-list">
+  {posts.map((post) => {
+    const excerpt = getExcerpt(post);
+    return (
+      <li class="post-list-item">
+        <h2><a href={`/posts/${post.id}/`}>{post.data.title}</a></h2>
+        <p class="post-meta">
+          <time datetime={post.data.date.toISOString()}>{post.data.date.toISOString().slice(0, 10)}</time>
+          {post.data.categories.map((category) => (
+            <>
+              <span aria-hidden="true"> · </span>
+              <a href={termHref('categories', category)}>{category}</a>
+            </>
+          ))}
+        </p>
+        {excerpt && <p class="post-excerpt">{excerpt}</p>}
+        {post.data.tags.length > 0 && (
+          <p class="tag-list">
+            {post.data.tags.map((tag) => <a class="tag" href={termHref('tags', tag)}>#{tag}</a>)}
+          </p>
+        )}
+      </li>
+    );
+  })}
 </ul>

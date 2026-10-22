@@ -1,16 +1,20 @@
 ---
 interface Props {
   id?: string;
+  /** Focus the input on load and run the `?q=` query from the URL (the dedicated search page). */
+  primary?: boolean;
 }
-const { id = 'search' } = Astro.props;
+const { id = 'search', primary = false } = Astro.props;
 ---
 <div id={id} class="search-box"></div>
 
 <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
 <script src="/pagefind/pagefind-ui.js" is:inline></script>
-<script is:inline define:vars={{ id }}>
+<script is:inline define:vars={{ id, primary }}>
   window.addEventListener('DOMContentLoaded', () => {
-    new PagefindUI({ element: `#${id}`, showSubResults: true });
+    const ui = new PagefindUI({ element: `#${id}`, showSubResults: true, autofocus: primary });
+    const query = primary && new URLSearchParams(location.search).get('q');
+    if (query) ui.triggerSearch(query);
   });
 </script>
 

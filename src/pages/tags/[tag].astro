@@ -1,0 +1,12 @@
+---
+import TermPage from '../../components/TermPage.astro';
+import { getSortedPosts, getTerms, type Term } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const terms = getTerms(await getSortedPosts(), 'tags');
+  return terms.map((term) => ({ params: { tag: term.slug }, props: { term } }));
+}
+
+const { term } = Astro.props as { term: Term };
+---
+<TermPage kind="tags" term={term} />

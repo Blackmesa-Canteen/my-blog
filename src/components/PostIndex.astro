@@ -1,0 +1,24 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import SearchBox from './SearchBox.astro';
+import PostList from './PostList.astro';
+import Pagination from './Pagination.astro';
+import HomeSidebar from './HomeSidebar.astro';
+
+interface Props {
+  allPosts: CollectionEntry<'posts'>[];
+  pagePosts: CollectionEntry<'posts'>[];
+  currentPage: number;
+  totalPages: number;
+}
+const { allPosts, pagePosts, currentPage, totalPages } = Astro.props;
+---
+<div class="home-layout">
+  <section class="home-main">
+    <h1>Posts <span class="heading-count">{allPosts.length}</span></h1>
+    <SearchBox id="home-search" />
+    <PostList posts={pagePosts} />
+    <Pagination currentPage={currentPage} totalPages={totalPages} />
+  </section>
+  <HomeSidebar posts={allPosts} />
+</div>
