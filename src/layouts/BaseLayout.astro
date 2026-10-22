@@ -5,8 +5,20 @@ interface Props {
   lang?: 'en' | 'zh';
   /** Let the page lay out its own width (post pages, which add a TOC sidebar). */
   wide?: boolean;
+  /** Include this page in the Pagefind search index. Off for listing pages, so results point at articles. */
+  searchable?: boolean;
 }
-const { title, description = '996工人之家', lang = 'en', wide = false } = Astro.props;
+const { title, description = '996工人之家', lang = 'en', wide = false, searchable = true } = Astro.props;
+
+const navItems = [
+  { href: '/', label: 'Posts', match: (path: string) => path === '/' || path.startsWith('/page/') || path.startsWith('/posts/') },
+  { href: '/archive/', label: 'Archive', match: (path: string) => path.startsWith('/archive') },
+  { href: '/tags/', label: 'Tags', match: (path: string) => path.startsWith('/tags') || path.startsWith('/categories') },
+  { href: '/about/', label: 'About', match: (path: string) => path.startsWith('/about') },
+  { href: '/tea-house/', label: 'Tea House', match: (path: string) => path.startsWith('/tea-house') },
+  { href: '/search/', label: 'Search', match: (path: string) => path.startsWith('/search') },
+];
+const path = Astro.url.pathname;
 ---
 <!doctype html>
 <html lang={lang}>
@@ -19,16 +31,18 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
     <title>{title}</title>
   </head>
   <body id="top">
+    <a class="skip-link" href="#content">Skip to content</a>
     <header class="site-header">
-      <nav>
+      <nav aria-label="Site">
         <a class="brand" href="/">996工人之家</a>
-        <a href="/">Posts</a>
-        <a href="/about">About</a>
-        <a href="/tea-house">Tea House</a>
-        <a href="/search">Search</a>
+        <div class="nav-links">
+          {navItems.map((item) => (
+            <a href={item.href} aria-current={item.match(path) ? 'page' : undefined}>{item.label}</a>
+          ))}
+        </div>
       </nav>
     </header>
-    <main class:list={{ wide }} data-pagefind-body>
+    <main id="content" class:list={{ wide }} data-pagefind-body={searchable ? '' : undefined}>
       <slot />
     </main>
     <footer class="site-footer">
@@ -47,10 +61,11 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
   :root {
     color-scheme: light dark;
     --max-width: 800px;
+    --page-width: 1160px;
     --toc-width: 240px;
     --fg: #2b2116;
     --bg: #fefbf3;
-    --muted: #8a7256;
+    --muted: #7a6248;
     --accent: #8b4513;
     --accent-strong: #cd853f;
     --highlight: #ffd700;
@@ -85,7 +100,7 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
     border-bottom: 2px solid var(--highlight);
   }
   .site-header nav {
-    max-width: var(--max-width);
+    max-width: var(--page-width);
     margin: 0 auto;
     padding: 1rem;
     display: flex;
@@ -97,10 +112,28 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
     color: var(--accent);
     margin-right: auto;
   }
-  .site-header nav a { white-space: nowrap; }
-  @media (max-width: 480px) {
-    .site-header nav { gap: 0.9rem; font-size: 0.95rem; }
+  .nav-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+  .nav-links a { white-space: nowrap; color: var(--fg); }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a[aria-current='page'] { color: var(--accent); font-weight: 600; box-shadow: inset 0 -2px 0 var(--highlight); }
+  @media (max-width: 640px) {
+    /* Brand on its own row, links on a second row underneath. */
+    .site-header nav { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem; }
+    .site-header .brand { width: 100%; }
+    .nav-links { gap: 0.25rem 0.75rem; font-size: 0.95rem; }
   }
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -3rem;
+    z-index: 10;
+    padding: 0.5rem 1rem;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 6px;
+  }
+  .skip-link:focus { top: 0.5rem; }
+  :focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; border-radius: 2px; }
   main {
     max-width: var(--max-width);
     margin: 0 auto;
@@ -126,10 +159,9 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
   main blockquote { margin: 1rem 0; padding: 0.25rem 1rem; border-left: 3px solid var(--highlight); color: var(--muted); }
 
   /*
-   * Post page: the article stays centred under the header; on wide screens
-   * the TOC sits sticky in the left margin. Between 1100px and the point
-   * where the margin is wide enough, TOC + article are centred as a pair.
-   * Below 1100px the TOC collapses into a <details> above the content.
+   * Post page: on wide screens the TOC sits sticky to the left of the
+   * article, the pair centred within the header's page width. Below 1100px
+   * the TOC collapses into a <details> above the content.
    */
   .post-layout { max-width: var(--max-width); margin: 0 auto; padding: 2rem 1rem; }
   .toc-sidebar { display: none; }
@@ -149,9 +181,10 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
   .toc-inline .toc ol ol { padding-left: 1rem; font-size: 0.92em; }
   @media (min-width: 1100px) {
     .post-layout.has-toc {
-      max-width: calc(var(--toc-width) + 2.5rem + var(--max-width));
+      max-width: var(--page-width);
       display: grid;
-      grid-template-columns: var(--toc-width) minmax(0, 1fr);
+      grid-template-columns: var(--toc-width) minmax(0, var(--max-width));
+      justify-content: center;
       column-gap: 2.5rem;
     }
     .has-toc .toc-sidebar {
@@ -171,19 +204,6 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
     .toc-sidebar .toc li.open > ol { display: block; }
     .toc-sidebar .toc ol ol a { padding-left: 1.5rem; font-size: 0.95em; }
     .toc-sidebar .toc a.active { color: var(--accent); border-left-color: var(--accent-strong); font-weight: 600; }
-  }
-  @media (min-width: 1440px) {
-    /* Margin is now wide enough: keep the article centred under the header
-       and let the TOC float in the left gutter. */
-    .post-layout.has-toc {
-      max-width: none;
-      grid-template-columns: minmax(0, 1fr) minmax(0, var(--max-width)) minmax(0, 1fr);
-      column-gap: 0;
-      padding-left: 0;
-      padding-right: 0;
-    }
-    .has-toc .toc-sidebar { width: var(--toc-width); justify-self: end; margin-right: 2.5rem; }
-    .has-toc > article { grid-column: 2; padding: 0 1rem; }
   }
 
   .back-to-top {
@@ -212,7 +232,7 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
     .back-to-top { transition: none; }
   }
   .site-footer {
-    max-width: var(--max-width);
+    max-width: var(--page-width);
     margin: 0 auto;
     padding: 2rem 1rem;
     color: var(--muted);
@@ -224,24 +244,73 @@ const { title, description = '996工人之家', lang = 'en', wide = false } = As
     font-size: 0.9em;
     margin-bottom: 1.5rem;
   }
-  .post-list-item {
-    padding: 1.25rem 0;
-    border-bottom: 1px solid var(--border);
-  }
+  .heading-count { font-size: 0.55em; font-weight: 500; color: var(--muted); vertical-align: middle; }
+  .breadcrumb { margin: 0 0 0.25rem; font-size: 0.9em; color: var(--muted); }
+
+  .post-list { list-style: none; padding: 0; margin: 0; }
+  .post-list-item { padding: 1.1rem 0; border-bottom: 1px solid var(--border); }
   .post-list-item h2 {
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 0.2rem;
     padding-bottom: 0;
     border-bottom: none;
+    font-size: 1.3rem;
   }
-  .tag-list { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .post-list-item .post-meta { margin: 0 0 0.4rem; }
+  .post-list-item .post-meta a { color: var(--muted); }
+  .post-list-item .post-meta a:hover { color: var(--accent); }
+  .post-excerpt {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tag-list { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.6rem 0 0; }
   .tag {
-    font-size: 0.8em;
-    color: var(--accent-strong);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--accent);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 0.1rem 0.6rem;
+    padding: 0.05rem 0.6rem;
   }
+  a.tag:hover { border-color: var(--accent-strong); text-decoration: none; }
+  .tag .count { color: var(--muted); }
+
+  /* Home: post list plus a sidebar for browsing by category, tag and year. */
+  .home-layout { max-width: var(--page-width); margin: 0 auto; padding: 2rem 1rem; }
+  .home-main > h1 { margin-top: 0; }
+  .home-sidebar { margin-top: 2.5rem; display: grid; gap: 1.75rem; }
+  .sidebar-section h2 {
+    margin: 0 0 0.6rem;
+    padding-bottom: 0.3rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-section .tag-list { margin: 0; }
+  .sidebar-more { margin: 0.6rem 0 0; font-size: 0.9rem; }
+  .count-list { list-style: none; margin: 0; padding: 0; }
+  .count-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.2rem 0; }
+  .count-list .count, .tag .count { font-size: 0.85em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .count-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); column-gap: 2rem; }
+  .count-grid li { border-bottom: 1px dashed var(--border); }
+  @media (min-width: 960px) {
+    .home-layout { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; column-gap: 3.5rem; }
+    .home-sidebar { margin-top: 0; align-content: start; position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); overflow-y: auto; scrollbar-width: thin; padding-right: 0.25rem; }
+  }
+
+  /* Archive: one compact row per post, grouped by year. */
+  .archive-years { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 1rem; }
+  .archive-year h2 { scroll-margin-top: 1rem; }
+  .archive-list { list-style: none; margin: 0; padding: 0; }
+  .archive-list li { display: flex; align-items: baseline; gap: 1rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--border); }
+  .archive-list time { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
 
   /*
    * Shared styling for the hand-drawn inline SVG diagrams that replace

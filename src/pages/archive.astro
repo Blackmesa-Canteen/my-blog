@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSortedPosts, groupByYear } from '../lib/posts';
+
+const posts = await getSortedPosts();
+const years = groupByYear(posts);
+---
+<BaseLayout title="Archive · 996工人之家" searchable={false}>
+  <h1>Archive <span class="heading-count">{posts.length}</span></h1>
+  <nav class="archive-years" aria-label="Years">
+    {years.map(({ year }) => <a href={`#y${year}`}>{year}</a>)}
+  </nav>
+  {years.map(({ year, posts }) => (
+    <section class="archive-year">
+      <h2 id={`y${year}`}>{year} <span class="heading-count">{posts.length}</span></h2>
+      <ul class="archive-list">
+        {posts.map((post) => (
+          <li>
+            <time datetime={post.data.date.toISOString()}>{post.data.date.toISOString().slice(5, 10)}</time>
+            <a href={`/posts/${post.id}/`}>{post.data.title}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</BaseLayout>

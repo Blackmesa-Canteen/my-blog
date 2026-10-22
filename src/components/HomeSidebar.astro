@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getTerms, groupByYear, termHref } from '../lib/posts';
+
+interface Props {
+  /** Every post, newest first (not just the current page). */
+  posts: CollectionEntry<'posts'>[];
+}
+const { posts } = Astro.props;
+
+const TOP_TAGS = 24;
+const categories = getTerms(posts, 'categories');
+const tags = getTerms(posts, 'tags');
+const years = groupByYear(posts);
+---
+<aside class="home-sidebar" data-pagefind-ignore>
+  <section class="sidebar-section">
+    <h2>Categories</h2>
+    <ul class="count-list">
+      {categories.map((term) => (
+        <li><a href={termHref('categories', term.name)}>{term.name}</a><span class="count">{term.count}</span></li>
+      ))}
+    </ul>
+  </section>
+  <section class="sidebar-section">
+    <h2>Tags</h2>
+    <p class="tag-list">
+      {tags.slice(0, TOP_TAGS).map((term) => (
+        <a class="tag" href={termHref('tags', term.name)}>{term.name} <span class="count">{term.count}</span></a>
+      ))}
+    </p>
+    {tags.length > TOP_TAGS && <p class="sidebar-more"><a href="/tags/">All {tags.length} tags &rarr;</a></p>}
+  </section>
+  <section class="sidebar-section">
+    <h2>Archive</h2>
+    <ul class="count-list">
+      {years.map(({ year, posts }) => (
+        <li><a href={`/archive/#y${year}`}>{year}</a><span class="count">{posts.length}</span></li>
+      ))}
+    </ul>
+  </section>
+</aside>

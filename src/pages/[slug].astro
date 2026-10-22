@@ -20,7 +20,7 @@ const lang = detectLang(`${page.data.title}\n${page.body ?? ''}`);
   <article>
     <h1>{page.data.title}</h1>
     {page.data.cover && (
-      <Image src={page.data.cover} alt={page.data.title} width={720} />
+      <Image src={page.data.cover} alt={page.data.title} width={800} />
     )}
     <Content />
   </article>
