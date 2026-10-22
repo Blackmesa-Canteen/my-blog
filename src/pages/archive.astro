@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getSortedPosts, groupByYear } from '../lib/posts';
+import Bi from '../components/Bi.astro';
 
 const posts = await getSortedPosts();
 const years = groupByYear(posts);
@@ -13,8 +14,8 @@ const years = groupByYear(posts);
 >
   <div class="post-layout has-toc">
   <aside class="toc-sidebar">
-    <p class="toc-title">Years</p>
-    <nav class="toc" aria-label="Years">
+    <p class="toc-title"><Bi zh="年份" en="Years" /></p>
+    <nav class="toc" aria-label="年份 Years">
       <ol>
         {years.map(({ year, posts }) => (
           <li><a href={`#y${year}`}>{year}<span class="count">{posts.length}</span></a></li>
@@ -23,8 +24,8 @@ const years = groupByYear(posts);
     </nav>
   </aside>
   <article>
-  <h1>Archive <span class="heading-count">{posts.length}</span></h1>
-  <nav class="archive-years" aria-label="Years">
+  <h1><Bi zh="归档" en="Archive" /> <span class="heading-count">{posts.length}</span></h1>
+  <nav class="archive-years" aria-label="年份 Years">
     {years.map(({ year }) => <a href={`#y${year}`}>{year}</a>)}
   </nav>
   {years.map(({ year, posts }) => (

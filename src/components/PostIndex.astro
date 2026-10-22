@@ -4,6 +4,7 @@ import SearchBox from './SearchBox.astro';
 import PostList from './PostList.astro';
 import Pagination from './Pagination.astro';
 import HomeSidebar from './HomeSidebar.astro';
+import Bi from './Bi.astro';
 
 interface Props {
   allPosts: CollectionEntry<'posts'>[];
@@ -15,7 +16,7 @@ const { allPosts, pagePosts, currentPage, totalPages } = Astro.props;
 ---
 <div class="home-layout">
   <section class="home-main">
-    <h1>Posts <span class="heading-count">{allPosts.length}</span></h1>
+    <h1><Bi zh="文章" en="Posts" /> <span class="heading-count">{allPosts.length}</span></h1>
     <SearchBox id="home-search" />
     <PostList posts={pagePosts} />
     <Pagination currentPage={currentPage} totalPages={totalPages} />

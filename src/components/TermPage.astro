@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostList from './PostList.astro';
+import Bi from './Bi.astro';
 import type { Term, TermKind } from '../lib/posts';
 
 interface Props {
@@ -17,7 +18,7 @@ const label = kind === 'tags' ? 'Tag' : 'Category';
   searchable={false}
 >
   <div class="page-wide">
-  <p class="breadcrumb"><a href="/tags/">Categories &amp; Tags</a> / {label}</p>
+  <p class="breadcrumb"><a href="/tags/"><Bi zh="分类与标签" en="Categories & Tags" /></a> / {kind === 'tags' ? <Bi zh="标签" en="Tag" /> : <Bi zh="分类" en="Category" />}</p>
   <h1>{kind === 'tags' ? `#${term.name}` : term.name} <span class="heading-count">{term.count}</span></h1>
   <PostList posts={term.posts} />
   </div>

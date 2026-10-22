@@ -1,13 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Bi from '../components/Bi.astro';
 ---
-<BaseLayout title="Not found · 996工人之家" searchable={false} noindex>
+<BaseLayout title="页面不存在 Not found · 996工人之家" searchable={false} noindex>
   <h1>404</h1>
-  <p>This page doesn't exist, or it moved when the blog left Halo.</p>
+  <p lang="zh">页面不存在，或者在博客迁出 Halo 时换了地址。</p>
+  <p lang="en">This page doesn't exist, or it moved when the blog left Halo.</p>
   <ul>
-    <li><a id="search-for-path" href="/search/">Search the blog</a></li>
-    <li><a href="/archive/">Browse every post by year</a></li>
-    <li><a href="/">Back to the latest posts</a></li>
+    <li><a id="search-for-path" href="/search/"><Bi zh="搜索博客" en="Search the blog" /></a></li>
+    <li><a href="/archive/"><Bi zh="按年份浏览全部文章" en="Browse every post by year" /></a></li>
+    <li><a href="/"><Bi zh="返回最新文章" en="Back to the latest posts" /></a></li>
   </ul>
   <script>
     // Old Halo URLs end in a readable slug; offer it as the search query.
@@ -15,7 +17,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     const link = document.getElementById('search-for-path') as HTMLAnchorElement | null;
     if (link && words) {
       link.href = `/search/?q=${encodeURIComponent(words)}`;
-      link.textContent = `Search the blog for “${words}”`;
+      link.querySelector('.bi-zh')!.textContent = `搜索“${words}”`;
+      link.querySelector('.bi-en')!.textContent = `Search for “${words}”`;
     }
   </script>
 </BaseLayout>
