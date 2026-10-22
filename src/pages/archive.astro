@@ -6,10 +6,23 @@ const posts = await getSortedPosts();
 const years = groupByYear(posts);
 ---
 <BaseLayout
+  wide
   title="Archive · 996工人之家"
   description={`All ${posts.length} posts on 996工人之家, by year.`}
   searchable={false}
 >
+  <div class="post-layout has-toc">
+  <aside class="toc-sidebar">
+    <p class="toc-title">Years</p>
+    <nav class="toc" aria-label="Years">
+      <ol>
+        {years.map(({ year, posts }) => (
+          <li><a href={`#y${year}`}>{year}<span class="count">{posts.length}</span></a></li>
+        ))}
+      </ol>
+    </nav>
+  </aside>
+  <article>
   <h1>Archive <span class="heading-count">{posts.length}</span></h1>
   <nav class="archive-years" aria-label="Years">
     {years.map(({ year }) => <a href={`#y${year}`}>{year}</a>)}
@@ -27,4 +40,6 @@ const years = groupByYear(posts);
       </ul>
     </section>
   ))}
+  </article>
+  </div>
 </BaseLayout>

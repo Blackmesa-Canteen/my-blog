@@ -8,10 +8,12 @@ const tags = getTerms(posts, 'tags');
 const byName = [...tags].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
 ---
 <BaseLayout
+  wide
   title="Categories & Tags · 996工人之家"
   description={`Browse 996工人之家 by ${categories.length} categories and ${tags.length} tags.`}
   searchable={false}
 >
+  <div class="page-wide">
   <h1>Categories &amp; Tags</h1>
   <h2>Categories</h2>
   <ul class="count-list count-grid">
@@ -25,4 +27,5 @@ const byName = [...tags].sort((a, b) => a.name.localeCompare(b.name, 'en', { sen
       <li><a href={termHref('tags', term.name)}>#{term.name}</a><span class="count">{term.count}</span></li>
     ))}
   </ul>
+  </div>
 </BaseLayout>

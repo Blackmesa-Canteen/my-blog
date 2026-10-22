@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../lib/site';
+import Icon, { type IconName } from '../components/Icon.astro';
 
 interface Props {
   title: string;
@@ -33,13 +34,13 @@ const {
 // Every page is served from a directory index, so the slash form is the one true URL.
 const canonical = new URL(Astro.url.pathname.replace(/\/?$/, '/'), Astro.site).href;
 
-const navItems = [
-  { href: '/', label: 'Posts', match: (path: string) => path === '/' || path.startsWith('/page/') || path.startsWith('/posts/') },
-  { href: '/archive/', label: 'Archive', match: (path: string) => path.startsWith('/archive') },
-  { href: '/tags/', label: 'Tags', match: (path: string) => path.startsWith('/tags') || path.startsWith('/categories') },
-  { href: '/about/', label: 'About', match: (path: string) => path.startsWith('/about') },
-  { href: '/tea-house/', label: 'Tea House', match: (path: string) => path.startsWith('/tea-house') },
-  { href: '/search/', label: 'Search', match: (path: string) => path.startsWith('/search') },
+const navItems: { href: string; label: string; icon: IconName; match: (path: string) => boolean }[] = [
+  { href: '/', label: 'Posts', icon: 'posts', match: (path: string) => path === '/' || path.startsWith('/page/') || path.startsWith('/posts/') },
+  { href: '/archive/', label: 'Archive', icon: 'archive', match: (path: string) => path.startsWith('/archive') },
+  { href: '/tags/', label: 'Tags', icon: 'tags', match: (path: string) => path.startsWith('/tags') || path.startsWith('/categories') },
+  { href: '/about/', label: 'About', icon: 'about', match: (path: string) => path.startsWith('/about') },
+  { href: '/tea-house/', label: 'Tea House', icon: 'teahouse', match: (path: string) => path.startsWith('/tea-house') },
+  { href: '/search/', label: 'Search', icon: 'search', match: (path: string) => path.startsWith('/search') },
 ];
 const path = Astro.url.pathname;
 
@@ -78,14 +79,18 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
     <header class="site-header">
       <nav aria-label="Site">
         <a class="brand" href="/">{SITE.name}</a>
-        <a class="travellings-icon" href={travellings.href} target="_blank" rel="noopener" title={travellings.title} aria-label={travellings.title}>
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M12 2c-4.42 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-6H6V6h5v5zm5.5 6c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6h-5V6h5v5z" /></svg>
-        </a>
         <div class="nav-links">
           {navItems.map((item) => (
-            <a href={item.href} aria-current={item.match(path) ? 'page' : undefined}>{item.label}</a>
+            <a href={item.href} aria-current={item.match(path) ? 'page' : undefined}>
+              <Icon name={item.icon} />
+              <span>{item.label}</span>
+            </a>
           ))}
         </div>
+        <a class="travellings-link" href={travellings.href} target="_blank" rel="noopener" title={travellings.title}>
+          <Icon name="train" />
+          <span><span lang="zh">开往</span> Travellings</span>
+        </a>
       </nav>
     </header>
     <main id="content" class:list={{ wide }} data-pagefind-body={searchable ? '' : undefined}>
@@ -113,7 +118,7 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
   :root {
     color-scheme: light dark;
     --max-width: 800px;
-    --page-width: 1160px;
+    --page-width: 1360px;
     --toc-width: 240px;
     --fg: #2b2116;
     --bg: #fefbf3;
@@ -160,24 +165,44 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
     align-items: center;
   }
   .site-header .brand {
+    flex: none;
     font-weight: 700;
     color: var(--accent);
     margin-right: auto;
   }
-  /* Icon sits after the nav links on desktop, next to the brand on phones. */
-  .travellings-icon { order: 2; display: grid; place-items: center; width: 2rem; height: 2rem; margin-left: -0.5rem; color: var(--muted); border-radius: 6px; }
-  .travellings-icon:hover { color: var(--accent); background: var(--bg); }
-  .nav-links { order: 1; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
-  .nav-links a { white-space: nowrap; color: var(--fg); }
-  .nav-links a:hover { color: var(--accent); }
-  .nav-links a[aria-current='page'] { color: var(--accent); font-weight: 600; box-shadow: inset 0 -2px 0 var(--highlight); }
-  @media (max-width: 640px) {
-    /* Brand on its own row, links on a second row underneath. */
-    .site-header nav { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem; }
-    .site-header .brand { width: auto; flex: 1; }
-    .travellings-icon { order: 0; margin-left: 0; }
-    .nav-links { width: 100%; }
-    .nav-links { gap: 0.25rem 0.75rem; font-size: 0.95rem; }
+  .site-header a:hover { text-decoration: none; }
+  .nav-links { display: flex; gap: 0.25rem; min-width: 0; }
+  .nav-links a, .travellings-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    white-space: nowrap;
+    color: var(--fg);
+  }
+  .nav-links .icon, .travellings-link .icon { flex: none; opacity: 0.75; }
+  .nav-links a:hover { color: var(--accent); background: var(--bg); }
+  .nav-links a[aria-current='page'] { color: var(--accent); background: var(--bg); box-shadow: inset 0 -2px 0 var(--highlight); }
+  .nav-links a[aria-current='page'] .icon { opacity: 1; }
+  /* External webring link: set apart from the site's own navigation. */
+  .travellings-link { flex: none; color: var(--accent); border: 1px solid var(--border); border-radius: 999px; font-size: 0.9rem; }
+  .travellings-link:hover { color: var(--accent); border-color: var(--accent-strong); background: var(--bg); }
+  @media (max-width: 900px) {
+    /* Brand and 开往 on the first row; the nav scrolls sideways on the second
+       rather than wrapping into a third. */
+    .site-header nav { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem 0.5rem; }
+    .nav-links {
+      order: 1;
+      width: calc(100% + 2rem);
+      margin: 0 -1rem;
+      padding: 0 1rem 0.25rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1.5rem), transparent);
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links a { padding: 0.35rem 0.55rem; font-size: 0.95rem; }
   }
   .skip-link {
     position: absolute;
@@ -365,13 +390,37 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
   .count-list .count, .tag .count { font-size: 0.85em; color: var(--muted); font-variant-numeric: tabular-nums; }
   .count-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); column-gap: 2rem; }
   .count-grid li { border-bottom: 1px dashed var(--border); }
+  /* Listing pages (tags index, a tag's posts) that use the full page width. */
+  .page-wide { max-width: var(--page-width); margin: 0 auto; padding: 2rem 1rem; }
+
+  /* From tablet width up, post lists become a grid of cards: as many
+     ~24rem columns as fit, so wide screens show more posts per screen. */
+  @media (min-width: 768px) {
+    .post-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); gap: 1rem; margin-top: 1rem; }
+    .post-list-item {
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 1.15rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      transition: border-color 0.15s;
+    }
+    .post-list-item:hover { border-color: var(--accent-strong); }
+    .post-list-item .post-excerpt { -webkit-line-clamp: 3; }
+    .post-list-item .tag-list { margin-top: auto; padding-top: 0.75rem; }
+    .post-list-item .tag { background: var(--bg); }
+  }
   @media (min-width: 960px) {
     .home-layout { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; column-gap: 3.5rem; }
     .home-sidebar { margin-top: 0; align-content: start; position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); overflow-y: auto; scrollbar-width: thin; padding-right: 0.25rem; }
   }
 
-  /* Archive: one compact row per post, grouped by year. */
+  /* Archive: one compact row per post, grouped by year; on wide screens the
+     years move into the same sticky sidebar the post TOC uses. */
   .archive-years { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-bottom: 1rem; }
+  .toc-sidebar .toc .count { float: right; font-size: 0.85em; color: var(--muted); }
+  @media (min-width: 1100px) { .has-toc .archive-years { display: none; } }
   .archive-year h2 { scroll-margin-top: 1rem; }
   .archive-list { list-style: none; margin: 0; padding: 0; }
   .archive-list li { display: flex; align-items: baseline; gap: 1rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--border); }
