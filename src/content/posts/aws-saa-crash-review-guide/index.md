@@ -16,7 +16,7 @@ tags:
 
 The exam code is still SAA-C03: 65 questions (50 scored + 15 unscored), 130 minutes, scored out of 1000 with 720 to pass, and a USD 150 fee. Question types are only multiple choice and multiple response (Choose two / three). Some sites claim it has moved to SAA-C04, but the official AWS certification page (October 2026) still links the SAA-C03 exam guide, so go with the official source [↗](https://aws.amazon.com/certification/certified-solutions-architect-associate/).
 
-| Domain | Weight | In one line |
+| Domain | Weight | Covers |
 | --- | --- | --- |
 | Domain 1: Design Secure Architectures | 30% | IAM, encryption, network isolation, compliance |
 | Domain 2: Design Resilient Architectures | 26% | High availability, decoupling, disaster recovery |
@@ -58,7 +58,7 @@ Core principles: least privilege, roles instead of long-lived access keys, and O
 
 ### IAM building blocks
 
-| Element | In one line | Remember |
+| Element | What it does | Key points |
 | --- | --- | --- |
 | Root user | The account's highest privilege, signs in with the email that created the account | Enable MFA, no access keys, don't use day to day |
 | IAM User | A long-lived identity for a person or program | Has a password and access keys; use sparingly |
@@ -87,7 +87,7 @@ Core principles: least privilege, roles instead of long-lived access keys, and O
 
 ### Multi-account governance
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS Organizations | Groups accounts into one organization, consolidated billing, OUs | multiple accounts, consolidated billing, volume discount |
 | SCP | Permission ceiling on an OU or account | deny across all accounts, prevent region usage, restrict instance types |
@@ -98,7 +98,7 @@ Core principles: least privilege, roles instead of long-lived access keys, and O
 
 ### End-user identity (application side)
 
-| Service | In one line |
+| Service | What it does |
 | --- | --- |
 | Cognito User Pools | Sign-up and sign-in for apps (password, social login, MFA), issues JWT tokens; integrates with API Gateway / ALB auth |
 | Cognito Identity Pools | Exchanges a signed-in user (or guest) for temporary AWS credentials to access S3, DynamoDB directly |
@@ -136,7 +136,7 @@ Mnemonic: **Inspector finds vulnerabilities, GuardDuty catches bad actors, Macie
 
 ### Protection against network attacks
 
-| Service | Layer | In one line |
+| Service | Layer | What it does |
 | --- | --- | --- |
 | AWS WAF | Layer 7 | Blocks SQL injection, XSS, IP restriction, geo-blocking, rate-based rules against floods; attaches to CloudFront, ALB, API Gateway REST API, AppSync, Cognito user pool, App Runner, Amplify, Verified Access [↗](https://docs.aws.amazon.com/waf/latest/APIReference/Welcome.html) |
 | AWS Shield Standard | Layers 3, 4 | Free, on automatically, basic DDoS protection |
@@ -148,7 +148,7 @@ Note: WAF cannot attach directly to an NLB or EC2.
 
 ### Encryption and keys
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS KMS | Managed key service; most AWS encryption relies on it | encryption at rest, key rotation, key policy |
 | AWS CloudHSM | Dedicated hardware security module; you fully control the keys | FIPS 140-2 Level 3, single-tenant, full control of keys |
@@ -189,7 +189,7 @@ VPC underpins every domain. Keep one storyline in mind: a public subnet has a ro
 
 ### Basic components
 
-| Component | In one line | Remember |
+| Component | What it does | Key points |
 | --- | --- | --- |
 | VPC | Your private network in AWS, spanning all AZs in a Region | CIDRs can be added later, but must not overlap to interconnect |
 | Subnet | A slice of the VPC; one subnet lives in one AZ | For HA, put a subnet in each of several AZs |
@@ -227,7 +227,7 @@ Mnemonic: **"block a specific IP" → NACL (SGs can't Deny). "Only the ALB may r
 
 ### VPC to VPC
 
-| Option | In one line | Remember |
+| Option | What it does | Key points |
 | --- | --- | --- |
 | VPC Peering | Direct one-to-one link between two VPCs | Not transitive (A-B and B-C doesn't mean A-C); no overlapping CIDRs; works cross-account and cross-Region |
 | Transit Gateway | Hub-and-spoke for many VPCs and on-prem networks | Transitive routing, replaces a peering mesh; supports inter-Region peering, multicast |
@@ -237,7 +237,7 @@ Mnemonic: **a few VPCs → Peering; many VPCs + on-prem → Transit Gateway; sha
 
 ### Connecting to on-prem
 
-| Option | In one line | Remember |
+| Option | What it does | Key points |
 | --- | --- | --- |
 | Site-to-Site VPN | Encrypted IPsec tunnel over the internet | Up in minutes to hours, cheap; bandwidth and latency vary |
 | Direct Connect (DX) | Dedicated line, not over the internet | Stable bandwidth, low latency; takes weeks to provision; not encrypted by default |
@@ -304,7 +304,7 @@ Mnemonic: **steady → Savings Plans / RI; interruptible → Spot; licence tied 
 
 ### Auto Scaling
 
-| Policy | In one line | When |
+| Policy | What it does | When |
 | --- | --- | --- |
 | Target tracking | Keep a metric at a target (e.g. CPU 50%) | Most common, simplest |
 | Step scaling | Scale in steps by alarm severity | Need fine-grained control |
@@ -336,7 +336,7 @@ Lambda@Edge / CloudFront Functions: run code at CloudFront edge locations. Cloud
 
 ### Containers
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | Amazon ECS | AWS's own container orchestrator | Simple, deeply integrated with AWS |
 | Amazon EKS | Managed Kubernetes | Question mentions Kubernetes, migrating on-prem K8s |
@@ -349,7 +349,7 @@ Lambda@Edge / CloudFront Functions: run code at CloudFront edge locations. Cloud
 
 ### Other compute
 
-| Service | In one line |
+| Service | What it does |
 | --- | --- |
 | Elastic Beanstalk | Upload code; AWS handles deployment, scaling, load balancing; "developers don't want to manage infrastructure" |
 | AWS App Runner | Deploy a web service straight from source or a container image, simpler than Beanstalk (closed to new customers from 30 April 2026) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) |
@@ -364,7 +364,7 @@ First split storage three ways: object (S3), block (EBS, Instance Store), file (
 
 ### S3 storage classes (always tested)
 
-| Class | Access frequency | Retrieval time | Minimum billing | Remember |
+| Class | Access frequency | Retrieval time | Minimum billing | Key points |
 | --- | --- | --- | --- | --- |
 | S3 Standard | Frequent | Milliseconds | None | Default |
 | S3 Intelligent-Tiering | Unknown / changing | Milliseconds (except archive tiers) | None | Moves data automatically, small monitoring fee, no retrieval fee |
@@ -397,7 +397,7 @@ Mnemonic: **regulation says "nobody can delete it" → Object Lock Compliance mo
 
 ### S3 access and security
 
-| Feature | In one line |
+| Feature | What it does |
 | --- | --- |
 | Block Public Access | One switch at account or bucket level to block public access (on by default) |
 | Bucket policy | Resource-based policy; cross-account grants, source IP restrictions, VPC endpoint restrictions, enforce HTTPS |
@@ -421,7 +421,7 @@ Mnemonic: **regulation says "nobody can delete it" → Object Lock Compliance mo
 
 ### EBS and Instance Store
 
-| Type | In one line | Keywords |
+| Type | What it does | Keywords |
 | --- | --- | --- |
 | gp3 | Default SSD, IOPS and throughput tuned independently; up to 80,000 IOPS, 2,000 MiB/s, 64 TiB (raised in September 2025; older banks say 16,000 IOPS) [↗](https://aws.amazon.com/about-aws/whats-new/2025/09/amazon-ebs-size-provisioned-performance-gp3-volumes) | General purpose, cheaper (migrate from gp2) |
 | io2 Block Express / io1 | High-IOPS SSD, supports Multi-Attach | Critical databases, low latency |
@@ -485,7 +485,7 @@ Mnemonic: **Multi-AZ keeps you alive; Read Replicas take the load.** "Reporting 
 
 ### Amazon Aurora
 
-| Feature | Remember |
+| Feature | Key points |
 | --- | --- |
 | Compatibility | MySQL- and PostgreSQL-compatible, faster than regular RDS |
 | Storage | Auto-grows to 256 TiB (raised from 128 TiB in 2025; older material says 128 TiB) [↗](https://aws.amazon.com/es/about-aws/whats-new/2025/07/amazon-aurora-postgresql-database-clusters-256-tib-storage-volume/), 6 copies across 3 AZs |
@@ -498,7 +498,7 @@ Mnemonic: **Multi-AZ keeps you alive; Read Replicas take the load.** "Reporting 
 
 ### Amazon DynamoDB
 
-| Feature | Remember |
+| Feature | Key points |
 | --- | --- |
 | Type | Serverless key-value / document NoSQL, single-digit ms latency, auto-scaling |
 | Capacity modes | On-demand (unpredictable traffic), Provisioned + Auto Scaling (predictable, cheaper) |
@@ -567,7 +567,7 @@ ELB points:
 
 ### Route 53
 
-| Routing policy | In one line | When |
+| Routing policy | What it does | When |
 | --- | --- | --- |
 | Simple | Returns one or more records, no health checks | A single resource |
 | Weighted | Split traffic by weight | Blue/green, A/B testing, gradual migration |
@@ -662,7 +662,7 @@ Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast 
 
 ### API Gateway
 
-| Type | In one line |
+| Type | What it does |
 | --- | --- |
 | REST API | Most complete: API keys, usage plans, request validation, caching, WAF |
 | HTTP API | Cheaper, lower latency, fewer features |
@@ -677,7 +677,7 @@ Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast 
 
 ### Other integration services
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | Amazon MQ | Managed ActiveMQ / RabbitMQ | Migrating from on-prem, no code changes, standard protocols like AMQP, MQTT, STOMP, OpenWire |
 | AWS AppSync | Managed GraphQL APIs | GraphQL, real-time data sync, offline mobile apps |
@@ -692,7 +692,7 @@ Remember the four stages of a data flow: Ingest → Process → Store → Analyz
 
 ### Ingesting streams
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | Kinesis Data Streams | Real-time streaming pipeline, data retained and re-readable (24 h default, up to 365 days); provisioned (shards) or on-demand | real-time, multiple consumers, replay, custom processing |
 | Amazon Data Firehose (formerly Kinesis Data Firehose) | Fully managed delivery to S3, Redshift, OpenSearch, Splunk; Lambda transforms, Parquet conversion | near-real-time, least operational overhead, no replay |
@@ -705,7 +705,7 @@ Mnemonic: **real-time with replay → Data Streams; just get it into S3 / Redshi
 
 ### Processing and transformation
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS Glue | Serverless ETL; Crawlers scan data and build the Data Catalog | ETL, schema discovery, CSV to Parquet |
 | Glue DataBrew | Visual data cleaning, no code | Analysts cleaning data |
@@ -715,7 +715,7 @@ Mnemonic: **real-time with replay → Data Streams; just get it into S3 / Redshi
 
 ### Storage and analysis
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | Amazon S3 | The core of a data lake | Raw data, any format, cheap |
 | AWS Lake Formation | Build a data lake fast, central fine-grained permissions (column, row level) | build data lake, fine-grained access control |
@@ -759,7 +759,7 @@ Keep them apart: CloudWatch for performance and logs, CloudTrail for who did wha
 
 ### CloudWatch
 
-| Feature | In one line | Remember |
+| Feature | What it does | Key points |
 | --- | --- | --- |
 | Metrics | Performance metrics | EC2 every 5 minutes by default, 1 minute with detailed monitoring; memory and disk usage are not default metrics, they need the CloudWatch agent |
 | Alarms | Act when a metric crosses a threshold | Can trigger SNS, Auto Scaling, EC2 actions (stop, reboot, recover); composite alarms combine alarms to cut noise |
@@ -783,7 +783,7 @@ Keep them apart: CloudWatch for performance and logs, CloudTrail for who did wha
 
 ### Systems Manager (SSM)
 
-| Feature | In one line |
+| Feature | What it does |
 | --- | --- |
 | Session Manager | Log in to instances without opening SSH or using keys, with an audit trail |
 | Run Command | Run commands across many instances at once |
@@ -799,7 +799,7 @@ Keep them apart: CloudWatch for performance and logs, CloudTrail for who did wha
 
 ### Infrastructure as code and deployment
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | CloudFormation | Build whole stacks from YAML / JSON templates | infrastructure as code, repeatable deployments |
 | StackSets | Deploy to many accounts and Regions at once | multi-account / multi-region deployment |
@@ -810,7 +810,7 @@ Keep them apart: CloudWatch for performance and logs, CloudTrail for who did wha
 
 ### Other operations tools
 
-| Service | In one line |
+| Service | What it does |
 | --- | --- |
 | AWS Trusted Advisor | Best-practice checks across cost, performance, security, fault tolerance and service limits, with recommendations (full checks need Business support or higher) |
 | AWS Health Dashboard | AWS service events and maintenance notices affecting your resources; automate with EventBridge |
@@ -858,7 +858,7 @@ Mnemonic (cheapest to priciest): **backup → pilot light → warm standby → a
 
 ### Backup and DR services
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS Backup | Central backup plans across many services (EC2, EBS, RDS, Aurora, DynamoDB, EFS, FSx, S3) | centralized backup, cross-account, cross-Region copy |
 | AWS Backup Vault Lock | Backups that can't be deleted (WORM) | Ransomware protection, regulation |
@@ -878,7 +878,7 @@ First identify what's moving: servers → MGN; databases → DMS (+ SCT); files 
 
 ### Migration strategies (the 7 Rs)
 
-| Strategy | Plain English | Typical tools |
+| Strategy | Meaning | Typical tools |
 | --- | --- | --- |
 | Rehost | Move as-is (lift and shift) | AWS Application Migration Service (MGN) |
 | Replatform | Small changes (lift, tinker and shift), e.g. moving the database to RDS | DMS, Elastic Beanstalk |
@@ -890,7 +890,7 @@ First identify what's moving: servers → MGN; databases → DMS (+ SCT); files 
 
 ### Server and database migration
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS Application Migration Service (MGN) | Continuously replicates on-prem servers to AWS for a minimal-downtime cutover (renamed AWS Transform MGN in June 2026; exam questions still say MGN / Application Migration Service) [↗](https://aws.amazon.com/de/about-aws/whats-new/2026/06/aws-transform-mgn-rebrand/) | lift-and-shift, rehost, many VMs |
 | AWS Application Discovery Service | Inventories on-prem servers, dependencies, utilization (closed to new customers from November 2025; new projects use AWS Transform) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) | Pre-migration assessment |
@@ -902,7 +902,7 @@ Mnemonic: **same engine (MySQL → RDS MySQL) only needs DMS; different engines 
 
 ### Data transfer
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS DataSync | Automated online file transfer (NFS, SMB, HDFS, object storage) to S3, EFS, FSx, and between AWS services; encryption, verification, scheduling | online transfer, scheduled sync, moving a NAS |
 | AWS Transfer Family | Managed SFTP / FTPS / FTP / AS2 servers backed by S3 or EFS | Partners uploading files over SFTP |
@@ -961,7 +961,7 @@ Cost questions follow a fixed pattern: commitment discounts for steady load, Spo
 
 ### Cost management tools
 
-| Service | In one line | Keywords |
+| Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS Cost Explorer | Visualize past spend, forecast, Savings Plans / RI purchase recommendations | analyze costs, forecast |
 | AWS Budgets | Set budgets, alert on actual or forecast overruns, take automatic actions (apply an IAM policy, stop instances) | alert when exceeding budget |
@@ -979,7 +979,7 @@ Cost features in Organizations:
 - Consolidated billing: all accounts billed together, combined usage earns tiered discounts.
 - RI and Savings Plans discounts are shared across accounts in the organization.
 
-## AI / ML services in one line each
+## AI / ML services at a glance
 
 SAA only tests "which service does what", not model details. The question describes a capability; map it to the service name.
 
@@ -1003,7 +1003,7 @@ SAA only tests "which service does what", not model details. The question descri
 
 Mnemonic: **see images → Rekognition; read documents → Textract; understand text → Comprehend; listen → Transcribe; speak → Polly; translate → Translate; chat → Lex; search → Kendra; recommend → Personalize; train your own → SageMaker; generative → Bedrock.**
 
-## Keyword reflex table
+## Keyword lookup table
 
 Read this in the last hour before the exam: see the description on the left, think of the answer on the right.
 

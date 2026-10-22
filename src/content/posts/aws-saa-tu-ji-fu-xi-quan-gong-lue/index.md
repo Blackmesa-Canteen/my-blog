@@ -16,7 +16,7 @@ tags:
 
 目前考試代號仍是 SAA-C03：65 題（50 題計分 + 15 題不計分），130 分鐘，滿分 1000、720 分及格，報名費 150 美元。題型只有單選和複選（Choose two / three）。網路上有些網站聲稱已改版為 SAA-C04，但 AWS 官方認證頁面（2026 年 10 月）連結的仍是 SAA-C03 考試指南，以官方為準 [↗](https://aws.amazon.com/certification/certified-solutions-architect-associate/)。
 
-| 領域 | 比重 | 一句話 |
+| 領域 | 比重 | 涵蓋內容 |
 | --- | --- | --- |
 | Domain 1：Design Secure Architectures | 30% | IAM、加密、網路隔離、合規 |
 | Domain 2：Design Resilient Architectures | 26% | 高可用、解耦、災難復原 |
@@ -45,7 +45,7 @@ tags:
 | Decouple | SQS、SNS、EventBridge |
 | Without code changes | 用設定或託管功能解決（例如 RDS Proxy、Multi-AZ、CloudFront）而非改應用程式 |
 
-### 通用常識
+### 通則
 
 - 答案通常是 AWS 託管服務，很少是「在 EC2 上自己架」。
 - 「Cron job on EC2」幾乎都是錯的，換成 EventBridge Scheduler + Lambda。
@@ -58,7 +58,7 @@ tags:
 
 ### IAM 基本元素
 
-| 元素 | 一句話 | 記憶點 |
+| 元素 | 說明 | 要點 |
 | --- | --- | --- |
 | Root user | 帳號的最高權限，用建立帳號的 email 登入 | 開 MFA、不建 access key、日常不用 |
 | IAM User | 一個人或程式的長期身分 | 有密碼和 access key，盡量少用 |
@@ -87,7 +87,7 @@ tags:
 
 ### 多帳號治理
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | AWS Organizations | 把多個帳號歸成一個組織，合併帳單、用 OU 分組 | multiple accounts、consolidated billing、volume discount |
 | SCP | 對 OU 或帳號設權限天花板 | deny across all accounts、prevent region usage、restrict instance types |
@@ -98,7 +98,7 @@ tags:
 
 ### 使用者身分（應用程式端）
 
-| 服務 | 一句話 |
+| 服務 | 說明 |
 | --- | --- |
 | Cognito User Pools | App 的註冊、登入（帳密、社群登入、MFA），給 JWT token；可接 API Gateway / ALB 驗證 |
 | Cognito Identity Pools | 把登入過的使用者（或訪客）換成臨時 AWS 憑證，直接存取 S3、DynamoDB |
@@ -120,7 +120,7 @@ tags:
 
 ### 偵測與合規服務（最容易混淆）
 
-| 服務 | 它在看什麼 | 關鍵字 |
+| 服務 | 偵測對象 | 關鍵字 |
 | --- | --- | --- |
 | Amazon Inspector | EC2、ECR 映像、Lambda 的**軟體漏洞（CVE）**和網路暴露 | vulnerabilities、CVE、patch assessment |
 | Amazon GuardDuty | 用 CloudTrail、VPC Flow Logs、DNS logs 偵測可疑行為和威脅 | threat detection、malicious IP、crypto mining、compromised instance |
@@ -136,7 +136,7 @@ tags:
 
 ### 網路攻擊防護
 
-| 服務 | 層級 | 一句話 |
+| 服務 | 層級 | 說明 |
 | --- | --- | --- |
 | AWS WAF | 第 7 層 | 擋 SQL injection、XSS、限制 IP、地理封鎖、rate-based rule 防暴力請求；可掛在 CloudFront、ALB、API Gateway REST API、AppSync、Cognito user pool、App Runner、Amplify、Verified Access [↗](https://docs.aws.amazon.com/waf/latest/APIReference/Welcome.html) |
 | AWS Shield Standard | 第 3、4 層 | 免費自動開啟，基本 DDoS 防護 |
@@ -148,7 +148,7 @@ tags:
 
 ### 加密與金鑰
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | AWS KMS | 託管金鑰服務，大多數 AWS 服務的加密都靠它 | encryption at rest、key rotation、key policy |
 | AWS CloudHSM | 專屬的硬體安全模組，金鑰完全由你控制 | FIPS 140-2 Level 3、single-tenant、full control of keys |
@@ -189,7 +189,7 @@ VPC 是每個領域都會碰到的基礎。記住一條主線：public subnet �
 
 ### 基本元件
 
-| 元件 | 一句話 | 記憶點 |
+| 元件 | 說明 | 要點 |
 | --- | --- | --- |
 | VPC | 你在 AWS 的私有網路，跨同 Region 的所有 AZ | CIDR 建好後可再加，但不能重疊才能互連 |
 | Subnet | VPC 切出的子網，一個 subnet 只在一個 AZ | 高可用要在多個 AZ 各放一個 subnet |
@@ -227,7 +227,7 @@ VPC 是每個領域都會碰到的基礎。記住一條主線：public subnet �
 
 ### VPC 對 VPC
 
-| 方案 | 一句話 | 記憶點 |
+| 方案 | 說明 | 要點 |
 | --- | --- | --- |
 | VPC Peering | 兩個 VPC 一對一直連 | 不能傳遞（A-B、B-C 不代表 A-C）；CIDR 不能重疊；可跨帳號跨 Region |
 | Transit Gateway | 星狀中樞，連接大量 VPC 和地端網路 | 可傳遞路由，取代網狀 peering；支援跨 Region peering、multicast |
@@ -237,7 +237,7 @@ VPC 是每個領域都會碰到的基礎。記住一條主線：public subnet �
 
 ### 連回地端
 
-| 方案 | 一句話 | 記憶點 |
+| 方案 | 說明 | 要點 |
 | --- | --- | --- |
 | Site-to-Site VPN | 走公網的 IPsec 加密通道 | 幾分鐘到幾小時就能建好、便宜；頻寬和延遲不穩定 |
 | Direct Connect (DX) | 專線，不走公網 | 頻寬穩定、低延遲；建置要數週以上；預設不加密 |
@@ -304,7 +304,7 @@ VPC 是每個領域都會碰到的基礎。記住一條主線：public subnet �
 
 ### Auto Scaling
 
-| 擴展方式 | 一句話 | 何時選 |
+| 擴展方式 | 說明 | 何時選 |
 | --- | --- | --- |
 | Target tracking | 維持某指標在目標值（例如 CPU 50%） | 最常見、最簡單 |
 | Step scaling | 根據警報程度分段增減 | 需要細緻控制 |
@@ -336,7 +336,7 @@ Lambda@Edge / CloudFront Functions：在 CloudFront 邊緣執行程式。CloudFr
 
 ### 容器
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | Amazon ECS | AWS 自家的容器編排 | 簡單、與 AWS 深度整合 |
 | Amazon EKS | 託管的 Kubernetes | 題目提到 Kubernetes、從地端 K8s 遷移 |
@@ -349,7 +349,7 @@ Lambda@Edge / CloudFront Functions：在 CloudFront 邊緣執行程式。CloudFr
 
 ### 其他運算
 
-| 服務 | 一句話 |
+| 服務 | 說明 |
 | --- | --- |
 | Elastic Beanstalk | 上傳程式碼，AWS 自動處理部署、擴展、負載平衡；「開發者不想管基礎架構」 |
 | AWS App Runner | 從原始碼或容器映像直接部署網頁服務，比 Beanstalk 更簡單（2026 年 4 月 30 日起不再接受新客戶）[↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) |
@@ -364,7 +364,7 @@ Lambda@Edge / CloudFront Functions：在 CloudFront 邊緣執行程式。CloudFr
 
 ### S3 儲存類別（必考）
 
-| 類別 | 存取頻率 | 取回時間 | 最短計費天數 | 記憶點 |
+| 類別 | 存取頻率 | 取回時間 | 最短計費天數 | 要點 |
 | --- | --- | --- | --- | --- |
 | S3 Standard | 經常 | 毫秒 | 無 | 預設 |
 | S3 Intelligent-Tiering | 不知道 / 會變動 | 毫秒（封存層除外） | 無 | 自動搬移，收小額監控費，沒有取回費 |
@@ -397,7 +397,7 @@ Lambda@Edge / CloudFront Functions：在 CloudFront 邊緣執行程式。CloudFr
 
 ### S3 存取與安全
 
-| 功能 | 一句話 |
+| 功能 | 說明 |
 | --- | --- |
 | Block Public Access | 帳號或 bucket 層級一鍵禁止公開（預設開啟） |
 | Bucket policy | resource-based policy，可授權跨帳號、限制來源 IP、VPC endpoint、強制 HTTPS |
@@ -421,7 +421,7 @@ Lambda@Edge / CloudFront Functions：在 CloudFront 邊緣執行程式。CloudFr
 
 ### EBS 與 Instance Store
 
-| 類型 | 一句話 | 關鍵字 |
+| 類型 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | gp3 | 預設首選 SSD，IOPS 和 throughput 可獨立調整；上限 80,000 IOPS、2,000 MiB/s、64 TiB（2025 年 9 月提高，舊題庫為 16,000 IOPS）[↗](https://aws.amazon.com/about-aws/whats-new/2025/09/amazon-ebs-size-provisioned-performance-gp3-volumes) | 一般用途、省錢（從 gp2 換過來） |
 | io2 Block Express / io1 | 高 IOPS SSD，可 Multi-Attach | 關鍵資料庫、低延遲 |
@@ -485,7 +485,7 @@ Lambda@Edge / CloudFront Functions：在 CloudFront 邊緣執行程式。CloudFr
 
 ### Amazon Aurora
 
-| 特色 | 記憶點 |
+| 特色 | 要點 |
 | --- | --- |
 | 相容性 | MySQL、PostgreSQL 相容，效能比一般 RDS 高 |
 | 儲存 | 自動擴展到 256 TiB（2025 年從 128 TiB 提高，舊教材寫 128 TiB）[↗](https://aws.amazon.com/es/about-aws/whats-new/2025/07/amazon-aurora-postgresql-database-clusters-256-tib-storage-volume/)，6 份副本分佈在 3 個 AZ |
@@ -498,7 +498,7 @@ Lambda@Edge / CloudFront Functions：在 CloudFront 邊緣執行程式。CloudFr
 
 ### Amazon DynamoDB
 
-| 特色 | 記憶點 |
+| 特色 | 要點 |
 | --- | --- |
 | 類型 | serverless 的 key-value / document NoSQL，個位數毫秒延遲，自動擴展 |
 | 容量模式 | On-demand（流量不可預測）、Provisioned + Auto Scaling（可預測，較便宜） |
@@ -567,7 +567,7 @@ ELB 考點：
 
 ### Route 53
 
-| 路由策略 | 一句話 | 何時選 |
+| 路由策略 | 說明 | 何時選 |
 | --- | --- | --- |
 | Simple | 回傳一筆或多筆紀錄，無健康檢查 | 單一資源 |
 | Weighted | 按權重分配流量 | 藍綠部署、A/B 測試、漸進式遷移 |
@@ -614,7 +614,7 @@ Route 53 考點：
 
 ### SQS / SNS / EventBridge / Kinesis 比較
 
-| 服務 | 模式 | 一則訊息給幾個消費者 | 關鍵字 |
+| 服務 | 模式 | 消費者數量 | 關鍵字 |
 | --- | --- | --- | --- |
 | SQS | 佇列（pull） | 一個（處理完就刪除） | decouple、buffer、削峰、非同步處理 |
 | SNS | 發布 / 訂閱（push） | 多個訂閱者同時收到 | fan-out、通知（email、SMS、Lambda、SQS、HTTP） |
@@ -662,7 +662,7 @@ Route 53 考點：
 
 ### API Gateway
 
-| 類型 | 一句話 |
+| 類型 | 說明 |
 | --- | --- |
 | REST API | 功能最完整：API key、usage plan、請求驗證、快取、WAF |
 | HTTP API | 更便宜、更低延遲，功能較少 |
@@ -677,7 +677,7 @@ Route 53 考點：
 
 ### 其他整合服務
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | Amazon MQ | 託管的 ActiveMQ / RabbitMQ | 從地端遷移、不改程式、AMQP、MQTT、STOMP、OpenWire 等標準協定 |
 | AWS AppSync | 託管的 GraphQL API | GraphQL、即時資料同步、離線行動 App |
@@ -692,7 +692,7 @@ Route 53 考點：
 
 ### 串流資料進來
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | Kinesis Data Streams | 即時串流管道，資料保留可重讀（預設 24 小時，最長 365 天）；provisioned（shard）或 on-demand 模式 | real-time、多個 consumer、replay、自訂處理 |
 | Amazon Data Firehose（舊名 Kinesis Data Firehose） | 全託管搬運工，自動送到 S3、Redshift、OpenSearch、Splunk；可用 Lambda 轉換、轉成 Parquet | near-real-time、least operational overhead、不能重讀 |
@@ -705,7 +705,7 @@ Route 53 考點：
 
 ### 處理與轉換
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | AWS Glue | serverless ETL；Crawler 自動掃描資料建立 Data Catalog | ETL、schema discovery、CSV 轉 Parquet |
 | Glue DataBrew | 視覺化資料清理，不用寫程式 | 資料分析師清理資料 |
@@ -715,7 +715,7 @@ Route 53 考點：
 
 ### 存放與分析
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | Amazon S3 | Data Lake 核心 | 原始資料、任何格式、便宜 |
 | AWS Lake Formation | 快速建立 data lake，集中管理細緻權限（欄、列層級） | build data lake、fine-grained access control |
@@ -743,7 +743,7 @@ Redshift 考點：
 | 成本 | 便宜 | 較貴 |
 | 典型工具 | Glue + Athena + Lake Formation | Redshift + QuickSight |
 
-### 常見組合（直接背）
+### 常見架構組合
 
 - 串流 → S3 → 查詢：Firehose → S3 → Athena
 - 串流 → 資料倉儲：Firehose → Redshift
@@ -759,7 +759,7 @@ Redshift 考點：
 
 ### CloudWatch
 
-| 功能 | 一句話 | 記憶點 |
+| 功能 | 說明 | 要點 |
 | --- | --- | --- |
 | Metrics | 效能指標 | EC2 預設 5 分鐘一次，detailed monitoring 1 分鐘；記憶體、磁碟使用率不是預設指標，要裝 CloudWatch agent |
 | Alarms | 指標超過門檻時動作 | 可觸發 SNS、Auto Scaling、EC2 動作（停止、重開、復原）；composite alarm 組合多個警報減少誤報 |
@@ -783,7 +783,7 @@ Redshift 考點：
 
 ### Systems Manager（SSM）
 
-| 功能 | 一句話 |
+| 功能 | 說明 |
 | --- | --- |
 | Session Manager | 不開 SSH port、不用金鑰就能登入 instance，有稽核紀錄 |
 | Run Command | 一次對大量 instance 執行指令 |
@@ -799,7 +799,7 @@ Redshift 考點：
 
 ### 基礎架構即程式碼與部署
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | CloudFormation | 用 YAML / JSON 範本建立整套資源 | infrastructure as code、可重複部署 |
 | StackSets | 一次部署到多帳號、多 Region | multi-account / multi-region 部署 |
@@ -810,7 +810,7 @@ Redshift 考點：
 
 ### 其他維運工具
 
-| 服務 | 一句話 |
+| 服務 | 說明 |
 | --- | --- |
 | AWS Trusted Advisor | 依最佳實踐檢查成本、效能、安全、容錯、服務上限並給建議（完整檢查需 Business 以上支援方案） |
 | AWS Health Dashboard | AWS 服務事件和影響你資源的維護通知；可用 EventBridge 自動處理 |
@@ -858,7 +858,7 @@ Redshift 考點：
 
 ### 備份與 DR 服務
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | AWS Backup | 集中管理多種服務（EC2、EBS、RDS、Aurora、DynamoDB、EFS、FSx、S3）的備份計畫 | centralized backup、跨帳號、跨 Region 複製 |
 | AWS Backup Vault Lock | 備份不可刪除（WORM） | 防勒索軟體、法規 |
@@ -878,7 +878,7 @@ Redshift 考點：
 
 ### 遷移策略（7R）
 
-| 策略 | 白話 | 典型工具 |
+| 策略 | 意思 | 典型工具 |
 | --- | --- | --- |
 | Rehost | 原封不動搬（lift and shift） | AWS Application Migration Service (MGN) |
 | Replatform | 小改（lift, tinker and shift），例如資料庫改用 RDS | DMS、Elastic Beanstalk |
@@ -890,7 +890,7 @@ Redshift 考點：
 
 ### 伺服器與資料庫遷移
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | AWS Application Migration Service (MGN) | 持續複製地端伺服器到 AWS，最少停機切換（2026 年 6 月更名為 AWS Transform MGN，考題仍用 MGN / Application Migration Service）[↗](https://aws.amazon.com/de/about-aws/whats-new/2026/06/aws-transform-mgn-rebrand/) | lift-and-shift、rehost、大量 VM |
 | AWS Application Discovery Service | 盤點地端伺服器、相依性、使用率（2025 年 11 月起不再接受新客戶，新專案改用 AWS Transform）[↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) | 遷移前評估 |
@@ -902,7 +902,7 @@ Redshift 考點：
 
 ### 資料傳輸
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | AWS DataSync | 透過網路自動化傳輸檔案（NFS、SMB、HDFS、物件儲存）到 S3、EFS、FSx，也能 AWS 服務之間互傳；有加密、驗證、排程 | online transfer、定期同步、搬 NAS |
 | AWS Transfer Family | 託管的 SFTP / FTPS / FTP / AS2 伺服器，後端是 S3 或 EFS | 合作夥伴用 SFTP 上傳檔案 |
@@ -961,7 +961,7 @@ Snow 家族已大幅縮減：Snowcone、Snowmobile 已停用，Snowball Edge 也
 
 ### 成本管理工具
 
-| 服務 | 一句話 | 關鍵字 |
+| 服務 | 說明 | 關鍵字 |
 | --- | --- | --- |
 | AWS Cost Explorer | 視覺化分析過去花費，預測未來，給 Savings Plans / RI 購買建議 | analyze costs、forecast |
 | AWS Budgets | 設定預算，超過或預測會超過時通知，可自動執行動作（例如套用 IAM policy、停止 instance） | alert when exceeding budget |
@@ -979,7 +979,7 @@ Organizations 的省錢功能：
 - Consolidated billing：所有帳號合併計費，用量合計享階梯折扣。
 - RI 和 Savings Plans 的折扣可在組織內帳號間共用。
 
-## AI / ML 服務一句話對照
+## AI / ML 服務對照
 
 SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一個功能，你對到服務名稱即可。
 
@@ -1003,7 +1003,7 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 
 口訣：**看圖 → Rekognition；讀文件 → Textract；懂文字 → Comprehend；聽 → Transcribe；說 → Polly；翻 → Translate；聊 → Lex；搜 → Kendra；推薦 → Personalize；自己訓練 → SageMaker；生成式 → Bedrock。**
 
-## 關鍵字反射總表
+## 關鍵字速查表
 
 考前最後一小時看這張表：看到左邊的描述，直接想到右邊的答案。
 
