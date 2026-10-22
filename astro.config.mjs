@@ -27,5 +27,12 @@ export default defineConfig({
   ],
   markdown: {
     processor: satteri({ hastPlugins: [tableWrap] }),
+    // Warm Gruvbox themes to match the cream/brown site palette (the default
+    // github-dark looked blue against it). Both are emitted as CSS variables;
+    // BaseLayout picks one per colour scheme.
+    shikiConfig: {
+      themes: { light: 'gruvbox-light-medium', dark: 'gruvbox-dark-medium' },
+      defaultColor: false,
+    },
   },
 });

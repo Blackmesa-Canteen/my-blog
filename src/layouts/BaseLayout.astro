@@ -240,9 +240,17 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
   main :is(h2, h3, h4)[id] { scroll-margin-top: 1.5rem; }
   main h2 { padding-bottom: 0.3rem; border-bottom: 2px solid var(--highlight); }
   main img { max-width: 100%; height: auto; border-radius: 6px; }
-  main pre { overflow-x: auto; padding: 1rem; border-radius: 6px; background: #1e1e1e; }
+  main pre { overflow-x: auto; padding: 1rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); }
   main code { font-size: 0.9em; }
   main pre code { background: none; }
+
+  /* Shiki emits both themes as CSS variables (see astro.config.mjs);
+     pick the one matching the colour scheme. The block background stays
+     on the site's own --surface so it matches cards and tables. */
+  .astro-code, .astro-code span { color: var(--shiki-light); font-style: var(--shiki-light-font-style); font-weight: var(--shiki-light-font-weight); }
+  @media (prefers-color-scheme: dark) {
+    .astro-code, .astro-code span { color: var(--shiki-dark); font-style: var(--shiki-dark-font-style); font-weight: var(--shiki-dark-font-weight); }
+  }
 
   /* Markdown tables are wrapped in .table-wrap (see astro.config.mjs) so
      wide ones scroll sideways instead of pushing the page wider on phones. */
