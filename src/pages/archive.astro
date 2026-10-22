@@ -5,7 +5,11 @@ import { getSortedPosts, groupByYear } from '../lib/posts';
 const posts = await getSortedPosts();
 const years = groupByYear(posts);
 ---
-<BaseLayout title="Archive · 996工人之家" searchable={false}>
+<BaseLayout
+  title="Archive · 996工人之家"
+  description={`All ${posts.length} posts on 996工人之家, by year.`}
+  searchable={false}
+>
   <h1>Archive <span class="heading-count">{posts.length}</span></h1>
   <nav class="archive-years" aria-label="Years">
     {years.map(({ year }) => <a href={`#y${year}`}>{year}</a>)}

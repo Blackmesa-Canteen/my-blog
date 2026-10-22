@@ -10,7 +10,7 @@ tags:
 - Notes
 ---
 
-> 中文版：[AWS SAA 突擊複習全攻略](/posts/aws-saa-tu-ji-fu-xi-quan-gong-lue)
+> 中文版：[AWS SAA 突擊複習全攻略](/posts/aws-saa-tu-ji-fu-xi-quan-gong-lue/)
 
 ## Exam overview and answering technique
 

@@ -7,7 +7,11 @@ const categories = getTerms(posts, 'categories');
 const tags = getTerms(posts, 'tags');
 const byName = [...tags].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
 ---
-<BaseLayout title="Categories & Tags · 996工人之家" searchable={false}>
+<BaseLayout
+  title="Categories & Tags · 996工人之家"
+  description={`Browse 996工人之家 by ${categories.length} categories and ${tags.length} tags.`}
+  searchable={false}
+>
   <h1>Categories &amp; Tags</h1>
   <h2>Categories</h2>
   <ul class="count-list count-grid">

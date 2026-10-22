@@ -19,7 +19,12 @@ const tableWrap = defineHastPlugin({
 // https://astro.build/config
 export default defineConfig({
   site: 'https://blog.996workers.org',
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // The search page is empty until someone types; not useful to crawlers.
+      filter: (page) => !page.endsWith('/search/'),
+    }),
+  ],
   markdown: {
     processor: satteri({ hastPlugins: [tableWrap] }),
   },

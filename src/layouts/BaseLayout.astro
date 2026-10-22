@@ -1,4 +1,6 @@
 ---
+import { SITE } from '../lib/site';
+
 interface Props {
   title: string;
   description?: string;
@@ -7,8 +9,29 @@ interface Props {
   wide?: boolean;
   /** Include this page in the Pagefind search index. Off for listing pages, so results point at articles. */
   searchable?: boolean;
+  /** Keep the page out of search engines (404, the empty search page). Also drops the canonical link. */
+  noindex?: boolean;
+  /** Absolute URL of the Open Graph / Twitter card image. */
+  image?: string;
+  /** Set on post pages: switches og:type to article and adds article metadata. */
+  article?: { published: Date; tags: string[] };
+  /** Schema.org JSON-LD object for this page. */
+  jsonLd?: Record<string, unknown>;
 }
-const { title, description = '996工人之家', lang = 'en', wide = false, searchable = true } = Astro.props;
+const {
+  title,
+  description = SITE.description,
+  lang = 'en',
+  wide = false,
+  searchable = true,
+  noindex = false,
+  image,
+  article,
+  jsonLd,
+} = Astro.props;
+
+// Every page is served from a directory index, so the slash form is the one true URL.
+const canonical = new URL(Astro.url.pathname.replace(/\/?$/, '/'), Astro.site).href;
 
 const navItems = [
   { href: '/', label: 'Posts', match: (path: string) => path === '/' || path.startsWith('/page/') || path.startsWith('/posts/') },
@@ -29,12 +52,29 @@ const path = Astro.url.pathname;
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    {noindex ? <meta name="robots" content="noindex, follow" /> : <link rel="canonical" href={canonical} />}
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {image && <meta property="og:image" content={image} />}
+    {article && <meta property="article:published_time" content={article.published.toISOString()} />}
+    {article?.tags.map((tag) => <meta property="article:tag" content={tag} />)}
+    <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {image && <meta name="twitter:image" content={image} />}
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body id="top">
     <a class="skip-link" href="#content">Skip to content</a>
     <header class="site-header">
       <nav aria-label="Site">
-        <a class="brand" href="/">996工人之家</a>
+        <a class="brand" href="/">{SITE.name}</a>
         <div class="nav-links">
           {navItems.map((item) => (
             <a href={item.href} aria-current={item.match(path) ? 'page' : undefined}>{item.label}</a>
@@ -46,7 +86,7 @@ const path = Astro.url.pathname;
       <slot />
     </main>
     <footer class="site-footer">
-      <p>&copy; {new Date().getFullYear()} 996工人之家</p>
+      <p>&copy; {new Date().getFullYear()} {SITE.name} · <a href="/rss.xml">RSS</a></p>
     </footer>
   </body>
 </html>

@@ -24,6 +24,11 @@ export async function getStaticPaths() {
 
 const { posts, pagePosts, currentPage, totalPages } = Astro.props;
 ---
-<BaseLayout title={`Posts · page ${currentPage} · 996工人之家`} wide searchable={false}>
+<BaseLayout
+  title={`Posts · page ${currentPage} · 996工人之家`}
+  description={`Page ${currentPage} of ${totalPages} of the post list on 996工人之家, newest first.`}
+  wide
+  searchable={false}
+>
   <PostIndex allPosts={posts} pagePosts={pagePosts} currentPage={currentPage} totalPages={totalPages} />
 </BaseLayout>
