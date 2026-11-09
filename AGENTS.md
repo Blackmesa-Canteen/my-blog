@@ -25,7 +25,7 @@ original_permalink: string # optional — only set on posts migrated from the ol
 ai_assisted: boolean # optional, defaults to false — set true when AI helped write the post
 ```
 
-When `ai_assisted` is true, the site shows a shared "AI 辅助 · AI assisted" label in the post's date line, in post lists, and in the RSS description (wording lives in `AI_LABEL` in `src/lib/site.ts`). Any post Claude helps write gets `ai_assisted: true`.
+The flag picks the provenance wording (in `PROVENANCE` in `src/lib/site.ts`): an italic label in post lists ("AI 辅助 AI assisted", or "古法写作 Handcrafted" when false), and a full note at the top of every post. AI-assisted posts' RSS descriptions also start with the AI label. Any post Claude helps write gets `ai_assisted: true`.
 
 Reflective/personal (non-technical) posts typically use `categories: [Random]`, `tags: [Random]`.
 

@@ -4,7 +4,7 @@ import { Image, getImage } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Toc from '../../components/Toc.astro';
 import Bi from '../../components/Bi.astro';
-import AiLabel from '../../components/AiLabel.astro';
+import ProvenanceNote from '../../components/ProvenanceNote.astro';
 import { detectLang } from '../../lib/lang';
 import { getExcerpt } from '../../lib/posts';
 import { SITE } from '../../lib/site';
@@ -68,8 +68,8 @@ const jsonLd = {
       <p class="post-meta">
         {post.data.date.toISOString().slice(0, 10)}
         {post.data.categories.length > 0 && ` · ${post.data.categories.join(', ')}`}
-        {post.data.ai_assisted && <><span aria-hidden="true"> · </span><AiLabel /></>}
       </p>
+      <ProvenanceNote aiAssisted={post.data.ai_assisted} />
       {showToc && (
         <details class="toc-inline">
           <summary><Bi zh="目录" en="Contents" /></summary>
