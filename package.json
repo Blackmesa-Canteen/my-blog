@@ -26,7 +26,7 @@
     "workerd@1.20260911.1": true
   },
   "devDependencies": {
-    "pagefind": "^1.5.2",
+    "pagefind": "^1.6.0",
     "wrangler": "^4.156.0"
   }
 }
