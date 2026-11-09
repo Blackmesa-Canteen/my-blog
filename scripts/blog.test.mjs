@@ -53,6 +53,21 @@ test('edit finds Chinese and multiline titles and preserves legacy Markdown byte
   assert.equal(await readFile(file, 'utf8'), source);
 });
 
+test('a draft with malformed frontmatter does not block new or edit for other posts', async (t) => {
+  const root = await fixture(t);
+  const good = await createPost(root, 'Finished post', 'finished-post');
+  const broken = join(root, 'src/content/posts/half-written');
+  await mkdir(broken);
+  await writeFile(join(broken, 'index.md'), "---\ntitle: 'unclosed quote\nslug: half-written\n---\n");
+  const warnings = [];
+  t.mock.method(console, 'warn', (message) => warnings.push(message));
+  assert.equal((await findPosts(root, 'Finished'))[0].file, good);
+  assert.equal((await findPosts(root, 'half-written'))[0].file, join(broken, 'index.md'));
+  await assert.rejects(createPost(root, 'Same folder', 'half-written'), /already uses/);
+  assert.ok(await createPost(root, 'Another post', 'another-post'));
+  assert.ok(warnings.some((message) => message.includes('half-written')));
+});
+
 test('a generated post with a relative image builds with the real Astro schema and search index', async (t) => {
   const root = await fixture(t);
   for (const entry of ['src', 'public', 'astro.config.mjs', 'package.json']) {

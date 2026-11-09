@@ -43,7 +43,13 @@ async function listPosts(repoRoot) {
       if (error.code === 'ENOENT') continue;
       throw error;
     }
-    const { frontmatter } = parseFrontmatter(source);
+    // A half-written draft must not block finding or creating other posts.
+    let frontmatter = {};
+    try {
+      ({ frontmatter } = parseFrontmatter(source));
+    } catch (error) {
+      console.warn(`Skipping metadata in ${entry.name}/index.md (${error.message.split('\n')[0]}); using the folder name.`);
+    }
     result.push({
       file,
       slug: typeof frontmatter.slug === 'string' ? frontmatter.slug : entry.name,
