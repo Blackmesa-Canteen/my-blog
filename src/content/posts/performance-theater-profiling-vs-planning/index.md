@@ -3,6 +3,7 @@ title: 'The Performance Theater: Why Your Team Is Profiling When They Should Be 
 slug: performance-theater-profiling-vs-planning
 date: '2026-03-04T23:06:29.801773604Z'
 original_permalink: /archives/performance-theater-profiling-vs-planning
+ai_assisted: true
 ---
 
 # The Performance Theater: Why Your Team Is Profiling When They Should Be Planning

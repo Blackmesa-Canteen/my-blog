@@ -3,6 +3,7 @@ title: Why Object Storage Is Quietly Becoming Your Data Warehouse
 slug: object-storage-secret-database
 date: '2026-03-01T12:11:28.405169430Z'
 original_permalink: /archives/object-storage-secret-database
+ai_assisted: true
 ---
 
 ### Why Object Storage Is Quietly Becoming Your Data Warehouse

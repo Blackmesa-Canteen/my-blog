@@ -367,6 +367,9 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
   .post-list-item:has(h2 a:focus-visible) { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
   .post-list-item:hover h2 a { color: var(--accent-strong); }
   .post-list-item .post-meta a, .post-list-item .tag { position: relative; z-index: 1; }
+  /* Muted like the category; sits above the title link's overlay so its tooltip works. */
+  .ai-label { position: relative; z-index: 1; cursor: help; white-space: nowrap; }
+  .ai-label .bi-en { font-size: 0.85em; }
   .post-list-item h2 {
     margin: 0 0 0.2rem;
     padding-bottom: 0;

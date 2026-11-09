@@ -3,6 +3,7 @@ title: 'Serverless Databases in Seconds: What "Instant" Actually Means'
 slug: serverless-databases-instant-provisioning-tradeoffs
 date: '2026-03-25T23:02:55.808420154Z'
 original_permalink: /archives/serverless-databases-instant-provisioning-tradeoffs
+ai_assisted: true
 ---
 
 # Serverless Databases in Seconds: What "Instant" Actually Means

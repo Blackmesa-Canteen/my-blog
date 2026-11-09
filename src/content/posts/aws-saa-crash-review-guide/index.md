@@ -8,6 +8,7 @@ categories:
 tags:
 - AWS
 - Notes
+ai_assisted: true
 ---
 
 > 中文版：[AWS SAA 突擊複習全攻略](/posts/aws-saa-tu-ji-fu-xi-quan-gong-lue/)

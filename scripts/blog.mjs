@@ -107,7 +107,7 @@ export async function createPost(repoRoot, title, slug, date = new Date()) {
   await mkdir(directory); // Exclusive: never reuse or overwrite an existing folder.
   const file = join(directory, 'index.md');
   // JSON strings are valid YAML strings, including Chinese text and punctuation.
-  await writeFile(file, `---\ntitle: ${JSON.stringify(title.trim())}\nslug: ${slug}\ndate: ${localDate(date)}\ncategories: []\ntags: []\n---\n\n`, { flag: 'wx' });
+  await writeFile(file, `---\ntitle: ${JSON.stringify(title.trim())}\nslug: ${slug}\ndate: ${localDate(date)}\ncategories: []\ntags: []\nai_assisted: false\n---\n\n`, { flag: 'wx' });
   return file;
 }
 

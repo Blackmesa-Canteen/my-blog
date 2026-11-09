@@ -8,11 +8,8 @@ tags:
 - Development
 - Astro
 - Git
+ai_assisted: true
 ---
-
-> 本文在 AI 辅助下写成。
->
-> This post was written with AI assistance.
 
 ## 中文
 

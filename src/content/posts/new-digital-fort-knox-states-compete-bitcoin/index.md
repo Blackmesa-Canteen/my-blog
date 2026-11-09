@@ -3,6 +3,7 @@ title: 'The New Digital Fort Knox: When States Compete for Bitcoin'
 slug: new-digital-fort-knox-states-compete-bitcoin
 date: '2026-03-29T23:03:54.653757053Z'
 original_permalink: /archives/new-digital-fort-knox-states-compete-bitcoin
+ai_assisted: true
 ---
 
 # The New Digital Fort Knox: When States Compete for Bitcoin

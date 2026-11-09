@@ -11,6 +11,7 @@ const posts = defineCollection({
     tags: z.array(z.string()).default([]),
     cover: image().optional(),
     original_permalink: z.string().optional(),
+    ai_assisted: z.boolean().default(false),
   }),
 });
 

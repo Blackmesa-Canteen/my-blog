@@ -3,6 +3,7 @@ title: 'Bitcoin''s Maturity Crisis: Winning Legitimacy, Losing Soul'
 slug: bitcoin-maturity-crisis-2026
 date: '2026-03-01T23:02:29.534406599Z'
 original_permalink: /archives/bitcoin-maturity-crisis-2026
+ai_assisted: true
 ---
 
 # Bitcoin's Maturity Crisis: Winning Legitimacy, Losing Soul
