@@ -30,11 +30,39 @@ editor executable or its full path, without flags, or pass `--no-open` to
 print the file path. If the editor is unavailable, the path is still printed
 so you can open it yourself.
 
-The helper creates no branches, commits, or uploads. You can keep several
-uncommitted drafts in your usual checkout. All posts in that checkout appear
-in local previews and builds; a `draft: true` field does not hide them.
-Preview with `npm run dev` and visit `/posts/<slug>/`. Adding unfinished
-posts to a public branch exposes them, so review the files you commit.
+`new` and `edit` create no branches, commits, or uploads. You can keep several
+uncommitted drafts in your usual checkout on `main`. All posts in that
+checkout appear in local previews; a `draft: true` field does not hide them.
+Preview with `npm run dev` and visit `/posts/<slug>/`.
+
+When a post is ready:
+
+```sh
+npm run blog -- publish            # picks from the new or changed posts
+npm run blog -- publish my-new-post
+npm run blog -- sync               # after the pull request merges
+```
+
+`publish` fetches the latest `main` and copies only the selected post folder
+into a temporary Git worktree, so unfinished drafts and other local changes
+are never included. It stops if the post changed on GitHub since your
+checkout, or if another post there already uses the slug. For a new post
+dated before today, it offers to change the date (in your local file too).
+It then shows the one commit it built and asks before pushing it to
+`post/<slug>`, opens a pull request (or adds a commit to the post's open
+one), and turns on auto-merge, which waits for the required checks. Pass
+`--no-auto-merge` to merge it yourself, or `--yes` to skip the question.
+Your earlier local drafting history never leaves your machine, but every
+version you publish, including later fixes to an open pull request, stays
+public in the PR history.
+
+`sync` fast-forwards your local `main`. Local files that would block the
+update, such as the copy of a post you just published, are backed up under
+`.git/blog-sync-backup/`, moved aside, and copied back after the update.
+Unfinished drafts stay as they are, and edits you made after publishing are
+kept and listed as differences. If the update fails, your files are put back
+and the backup is kept. If local `main` has its own commits, sync stops
+without changing anything.
 
 Keep images next to `index.md` and use `./filename.png` links. If you paste
 images through your editor, check that it saves them in the post folder and
@@ -87,7 +115,8 @@ npm run preview   # preview the production build locally
 ## Workflow
 
 `main` is protected — direct pushes are rejected, including for the repo
-owner. To ship a change (a new post, a config tweak, anything):
+owner. For posts, `npm run blog -- publish` (above) does this for you. To
+ship any other change (a config tweak, a new feature):
 
 ```sh
 git checkout -b my-change
@@ -96,7 +125,7 @@ git push -u origin my-change
 gh pr create
 ```
 
-The PR can only be merged once both required checks pass (see Security
+The PR can only be merged once the required checks pass (see Security
 below). No reviewer approval is required, so once checks are green you can
 merge it yourself.
 
