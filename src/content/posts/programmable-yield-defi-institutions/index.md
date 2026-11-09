@@ -3,6 +3,7 @@ title: The Quiet Rebirth of Fixed Income in a Digital Age
 slug: programmable-yield-defi-institutions
 date: '2026-03-22T23:06:22.572010539Z'
 original_permalink: /archives/programmable-yield-defi-institutions
+ai_assisted: true
 ---
 
 ### The Quiet Rebirth of Fixed Income in a Digital Age

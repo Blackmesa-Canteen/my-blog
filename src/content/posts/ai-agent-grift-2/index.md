@@ -3,6 +3,7 @@ title: 'The AI Agent Grift: Why Your "Autonomous" Assistant is Neither'
 slug: ai-agent-grift-2
 date: '2026-02-02T11:53:12.570400609Z'
 original_permalink: /archives/ai-agent-grift-2
+ai_assisted: true
 ---
 
 # The AI Agent Grift: Why Your "Autonomous" Assistant is Neither
