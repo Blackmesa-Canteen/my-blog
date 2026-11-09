@@ -79,6 +79,19 @@ vulnerable or outdated dependencies (`npm` and the GitHub Actions used in
 this repo) on a weekly schedule, and immediately for security advisories.
 Those PRs go through the same checks as everything else.
 
+## Build check
+
+Every pull request and push to `main` also runs
+`.github/workflows/build.yml`. The **Site build** check uses Node 22,
+installs the locked dependencies with `npm ci`, and runs `npm run build`
+(Astro plus Pagefind). It validates the site without deploying it and
+requires no deployment credentials.
+
+To make a successful build a merge requirement, add **Site build** from
+GitHub Actions to the required status checks in `main`'s branch protection
+settings, keeping both existing security checks. Adding the workflow alone
+does not make the check required.
+
 ## Deployment
 
 This repo is connected to Cloudflare's Git integration (Workers Builds),
