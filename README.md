@@ -88,7 +88,7 @@ date: 2026-09-14
 categories: [Tech]
 tags: [astro]
 cover: ./cover.jpg   # optional, relative to this file
-ai_assisted: false   # optional; true shows an "AI 辅助 · AI assisted" label
+ai_assisted: false   # optional; picks the "AI 辅助" or "古法写作" label and note
 ---
 ```
 

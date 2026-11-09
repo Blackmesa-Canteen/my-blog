@@ -1,0 +1,12 @@
+---
+import { PROVENANCE } from '../lib/site';
+
+interface Props {
+  aiAssisted: boolean;
+}
+const p = PROVENANCE[Astro.props.aiAssisted ? 'ai' : 'human'];
+---
+<p class="provenance-note" data-pagefind-ignore>
+  <span class="bi-zh" lang="zh">{p.noteZh}</span>
+  <span class="bi-en" lang="en">{p.noteEn}</span>
+</p>

@@ -4,9 +4,22 @@ export const SITE = {
   description: 'Notes on software development, cloud and self-hosting, plus the odd essay. 软件开发、云计算与折腾笔记。',
 };
 
-/** Shown on posts whose frontmatter sets `ai_assisted: true`: in the date line of the post and of post lists, and at the start of RSS descriptions. */
-export const AI_LABEL = {
-  zh: 'AI 辅助',
-  en: 'AI assisted',
-  full: '本文在 AI 辅助下写成 / Written with AI assistance',
+/**
+ * Provenance wording, picked by the `ai_assisted` frontmatter flag: the short
+ * label appears (in italics) in post lists, the note at the top of each post.
+ * RSS descriptions of AI-assisted posts start with the AI label.
+ */
+export const PROVENANCE = {
+  ai: {
+    zh: 'AI 辅助',
+    en: 'AI assisted',
+    noteZh: '本文在 AI 辅助下写成。',
+    noteEn: 'Written with AI assistance.',
+  },
+  human: {
+    zh: '古法写作',
+    en: 'Handcrafted',
+    noteZh: '本文由作者古法手工写作，纯人工，无添加。',
+    noteEn: 'Handcrafted the old-fashioned way by the author. No AI, no additives.',
+  },
 };
