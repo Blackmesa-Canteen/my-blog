@@ -19,7 +19,7 @@ export const PROVENANCE = {
   human: {
     zh: '古法写作',
     en: 'Handcrafted',
-    noteZh: '本文由作者古法手工写作，纯人工，无添加。',
-    noteEn: 'Handcrafted the old-fashioned way by the author. No AI, no additives.',
+    noteZh: '本文由作者古法手工写作。',
+    noteEn: 'Handcrafted the old-fashioned way by the author.',
   },
 };
