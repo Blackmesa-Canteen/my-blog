@@ -260,6 +260,11 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
   main th { background: var(--surface); color: var(--accent); white-space: nowrap; }
   main tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface) 60%, transparent); }
   main blockquote { margin: 1rem 0; padding: 0.25rem 1rem; border-left: 3px solid var(--highlight); color: var(--muted); }
+  /* Collapsible blocks written in post Markdown (e.g. self-test answers), styled like the inline TOC. */
+  main details:not(.toc-inline) { margin: 0.75rem 0; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+  main details:not(.toc-inline) summary { cursor: pointer; padding: 0.6rem 1rem; }
+  main details:not(.toc-inline)[open] summary { border-bottom: 1px solid var(--border); }
+  main details:not(.toc-inline) > :not(summary) { margin: 0.75rem 1rem; }
 
   /*
    * Post page: on wide screens the TOC sits sticky to the left of the
