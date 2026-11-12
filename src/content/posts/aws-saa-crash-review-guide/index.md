@@ -1158,11 +1158,11 @@ The earlier chapters map requirements to services, which is enough when a questi
 
 - On each decision card, cover the right column, answer from the cues on the left, then check. Mark the cards you get wrong and look at them again the next day.
 - The self-test is deliberately not grouped by topic. Mixed practice trains you to tell similar options apart, which is exactly what scenario questions test (interleaving). Commit to an answer before expanding.
-- Skim the "details that don't exist" list again right before the exam. In the exam, the fastest win is deleting a wrong option, not comparing two right ones.
+- Skim the "hard constraints for eliminating options" again right before the exam. In the exam, the fastest win is deleting an option that contradicts a fact, not comparing two right ones.
 
 ### Procedure: eliminate, then compare
 
-1. **Delete options with a wrong detail**: one clause that isn't true (a feature that doesn't exist, something in the wrong place, a limit exceeded) sinks the whole option, however sensible the rest is. Common wrong details are in the next section.
+1. **Delete options with a wrong detail**: one clause that isn't true (a feature that doesn't exist, something in the wrong place, a limit exceeded) sinks the whole option, however sensible the rest is. The constraints to check against are in the next section.
 2. **Explicit numbers and verbs come first**: "rotate every year", "retrieve within 12 hours", "RPO of 30 seconds", "single writer", "all data immediately available" outrank the DR tier table and the adjective.
 3. **Watch the current-state sentences**: "currently On-Demand", "a Lambda created in the console", "the bucket already has objects", "already has Direct Connect" usually point to what the answer must change or reuse.
 4. **Split stems with several datasets**: "processing data needs maximum I/O, results must be durable, old data archived" is three datasets, each matched separately (instance store, S3, Glacier).
@@ -1178,37 +1178,38 @@ Correct pairs in multiple-response questions usually take one of three shapes. C
 | One per tier | One for the database + one for compute; one to receive + one to process |
 | Prevent + remediate | EBS encryption by default + SCP denying unencrypted volumes; Intelligent-Tiering + aborting incomplete multipart uploads |
 
-### Details that don't exist
+### Hard constraints for eliminating options
 
-If an option says any of these, delete it.
+Facts to check options against. If an option's description doesn't match these, delete it.
 
-| What the option says | What's actually true |
+| Item | Fact |
 | --- | --- |
-| A gateway endpoint placed in an AZ, or with a security group | It belongs to route tables, has no AZ, and takes no SG |
-| One ASG across Regions, one subnet across AZs | Neither is possible |
-| Two IAM roles on one EC2 instance, or a policy attached directly to an instance | One role, through one instance profile |
-| Deny rules in a security group | SGs only allow |
-| Referencing the peer's SG across cross-Region peering | Use the CIDR |
-| Turning on encryption for an existing RDS instance or EBS volume | Snapshot → encrypted copy → restore to a new one |
-| Restoring a snapshot onto an existing RDS instance | A restore always creates a new instance |
-| RDS event notifications catching row changes | They only report operational events (failover, backups, etc.) |
-| A Multi-AZ DB cluster for Oracle, SQL Server or MariaDB | MySQL and PostgreSQL only |
-| Two primaries in an Aurora Global Database | One writer Region |
-| Data Lifecycle Manager backing up RDS | It handles EBS snapshots and AMIs only |
-| WAF on an NLB or Global Accelerator, or WAF as a forwarding hop | WAF is associated with CloudFront, ALB, API Gateway and similar resources |
-| Snowball importing straight into FSx | Land in S3, then link FSx for Lustre to the bucket |
-| Firehose writing to DynamoDB | Firehose has no such destination |
-| Native S3 notifications to SQS FIFO or SageMaker | Native notifications go to SNS, SQS Standard, Lambda; anything else via EventBridge |
-| Lambda running longer than 15 minutes, or Windows containers | Neither is possible |
-| Sharing Savings Plans through RAM, reselling Savings Plans | Use discount sharing; only Standard RIs can be sold on the Marketplace |
-| ACM issuing a third-party CA's certificate, a custom certificate on a function URL | Get third-party certificates signed elsewhere and import them; function URLs don't support custom domains |
-| Lifecycle to IA before 30 days, or a transition dated after expiry | IA needs at least 30 days; transitioning after deletion is meaningless |
-| A legal hold with a retention period | Legal holds have no period; use a retention period for that |
-| A tag policy blocking missing tags, an SCP adding tags | Block missing tags with an SCP; add tags with EventBridge + Lambda |
-| Scheduling with Session Manager | Schedule with State Manager, Automation or EventBridge Scheduler |
-| HTML reports by SNS email | SNS email is plain text; use SES for HTML |
-| STS issuing SSH keys | STS issues temporary IAM credentials; keyless login is Session Manager |
-| API keys as an authorization mechanism | API keys are for metering and throttling; authorize with IAM, Cognito or a Lambda authorizer |
+| Gateway endpoint | Attached to route tables, belongs to no AZ, has no security group |
+| ASG, subnet | An ASG lives in one Region; a subnet lives in one AZ |
+| IAM permissions for EC2 | One role, through one instance profile |
+| Security group | Allow rules only; deny with a NACL |
+| Cross-Region peering | SG rules use the peer's CIDR |
+| Encrypting existing RDS or EBS | Snapshot → encrypted copy → restore to a new one |
+| Restoring an RDS snapshot | Always creates a new instance |
+| RDS event notifications | Report operational events: failover, backups, maintenance |
+| Multi-AZ DB cluster | Supports MySQL and PostgreSQL |
+| Aurora Global Database | One writer Region; the other Regions are read-only |
+| Data Lifecycle Manager | Handles EBS snapshots and AMIs; RDS backups use AWS Backup |
+| WAF | Associated with CloudFront, ALB, API Gateway, AppSync, Cognito and similar resources; Global Accelerator and NLB are protected by Shield Advanced |
+| Snowball and FSx | Import into S3 first, then link FSx for Lustre to the bucket |
+| Firehose destinations | S3, Redshift, OpenSearch, Splunk, HTTP endpoints and more; to write DynamoDB use Data Streams + Lambda |
+| Native S3 event notifications | Targets are SNS, SQS Standard and Lambda; anything else goes through EventBridge |
+| Lambda | 15 minutes max; container images are Linux |
+| Savings Plans | Shared across the org with discount sharing; Standard RIs are what can be resold on the Marketplace |
+| Third-party CA certificates | Signed elsewhere, then imported into ACM |
+| Lambda function URL | Uses an AWS-generated URL and certificate; for a custom domain use API Gateway or CloudFront |
+| Lifecycle to IA | Objects must be 30 days old to transition; transitions come before expiration |
+| Legal hold | Stays in effect until removed; for a fixed period use a retention period |
+| Governing tags | A tag policy governs values; blocking creation without a tag is an SCP (`aws:RequestTag`); adding tags automatically is EventBridge + Lambda |
+| Scheduling operations | State Manager, Automation or EventBridge Scheduler; Session Manager is for logging in |
+| HTML email | SES; SNS email is plain text |
+| STS | Issues temporary IAM credentials; keyless instance login is Session Manager |
+| API Gateway API keys | For metering and throttling; authorize with IAM, Cognito or a Lambda authorizer |
 
 ### Decision cards
 

@@ -1158,11 +1158,11 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 
 - 決策卡先遮住右欄，看左欄的線索自己回答，再對答案。答錯的卡片做記號，隔一天再看一次。
 - 自我測驗故意不按主題排列。混在一起練，練的是「分辨相似選項」，這正是情境題考的能力（interleaving）。先想好答案再展開。
-- 考前把「不存在的細節」清單再掃一次。考場上最省時間的是直接刪掉錯的選項，而不是比較兩個都對的選項。
+- 考前把「刪選項用的硬限制」再掃一次。考場上最省時間的是直接刪掉不符合事實的選項，而不是比較兩個都對的選項。
 
 ### 判斷流程：先刪，再比
 
-1. **刪掉描述錯誤的選項**：只要有一個細節不成立（功能不存在、放錯位置、超過限制），整個選項出局，其他部分再合理都沒用。常見的錯誤細節見下一節。
+1. **刪掉描述錯誤的選項**：只要有一個細節不成立（功能不存在、放錯位置、超過限制），整個選項出局，其他部分再合理都沒用。拿來對照的硬限制見下一節。
 2. **明確的數字和動詞優先**：「每年輪替」「12 小時內取回」「RPO 30 秒」「單一 writer」「所有資料立即可用」比 DR 層級表和形容詞都優先。
 3. **注意現況描述**：「目前用 On-Demand」「在 console 建的 Lambda」「bucket 裡已經有物件」「已經有 Direct Connect」這類句子，通常就是答案要改、或要利用的地方。
 4. **一題多筆資料就拆開**：例如「處理中的資料要最高 I/O，成品要耐久，舊資料要封存」是三筆資料，各自對應（instance store、S3、Glacier）。
@@ -1178,37 +1178,38 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 每層一個 | 資料庫一個 + 運算一個；接收一個 + 處理一個 |
 | 預防 + 補救 | EBS 預設加密 + SCP 拒絕未加密；Intelligent-Tiering + 清掉未完成的 multipart upload |
 
-### 不存在的細節
+### 刪選項用的硬限制
 
-選項裡出現這些說法，直接刪掉。
+讀選項時拿來對照的事實。選項的描述和這些事實不符，就可以刪掉。
 
-| 選項裡的說法 | 實際情況 |
+| 項目 | 事實 |
 | --- | --- |
-| Gateway endpoint 放在某個 AZ、掛 security group | 屬於路由表，沒有 AZ，不能掛 SG |
-| 一個 ASG 跨 Region、一個 subnet 跨 AZ | 都不行 |
-| 一台 EC2 掛兩個 IAM role、把 policy 直接掛在 instance 上 | 只能透過一個 instance profile 掛一個 role |
-| Security group 的 deny 規則 | SG 只有 allow |
-| 跨 Region peering 時 SG 參照對方的 SG | 只能寫 CIDR |
-| 在既有的 RDS、EBS 上直接開啟加密 | 要 snapshot → 加密複製 → 還原成新的 |
-| 把 snapshot 還原到既有的 RDS instance | 還原一定建立新的 instance |
-| 用 RDS event notification 抓資料列變更 | 只有維運事件（failover、備份等） |
-| Oracle、SQL Server、MariaDB 的 Multi-AZ DB cluster | 只有 MySQL、PostgreSQL |
-| Aurora Global Database 有兩個 primary | 只有一個 writer Region |
-| 用 Data Lifecycle Manager 備份 RDS | 只管 EBS snapshot 和 AMI |
-| WAF 掛在 NLB、Global Accelerator 上，或把 WAF 當成轉送的一跳 | WAF 是關聯到 CloudFront、ALB、API Gateway 等資源上 |
-| Snowball 直接匯入 FSx | 先進 S3，再讓 FSx for Lustre 連結 S3 |
-| Firehose 寫入 DynamoDB | Firehose 沒有這個目的地 |
-| S3 原生通知送到 SQS FIFO、SageMaker | 原生通知只能送 SNS、SQS Standard、Lambda；其他目標走 EventBridge |
-| Lambda 跑超過 15 分鐘、跑 Windows 容器 | 都不行 |
-| 用 RAM 分享 Savings Plans、轉賣 Savings Plans | 用 discount sharing；只有 Standard RI 能在 Marketplace 賣 |
-| ACM 簽發第三方 CA 的憑證、function URL 掛自訂憑證 | 第三方憑證在外部簽好再匯入 ACM；function URL 不支援自訂網域 |
-| Lifecycle 不到 30 天就轉 IA、轉換日期排在刪除日期之後 | IA 至少要放 30 天；刪除之後再轉換沒有意義 |
-| Legal hold 設定保留期限 | Legal hold 沒有期限，要期限用 retention period |
-| 用 tag policy 擋「沒加 tag」、用 SCP 幫資源加 tag | 擋缺 tag 用 SCP；自動加 tag 用 EventBridge + Lambda |
-| 用 Session Manager 排程 | 排程用 State Manager、Automation 或 EventBridge Scheduler |
-| 用 SNS email 寄 HTML 報表 | SNS email 只有純文字，HTML 用 SES |
-| 用 STS 發 SSH 金鑰 | STS 發的是 IAM 臨時憑證；不用金鑰登入用 Session Manager |
-| 把 API key 當成授權機制 | API key 只用於計量和節流；授權用 IAM、Cognito 或 Lambda authorizer |
+| Gateway endpoint | 掛在路由表上，不屬於任何 AZ，也沒有 security group |
+| ASG、subnet | ASG 在單一 Region 內；subnet 在單一 AZ 內 |
+| EC2 的 IAM 權限 | 透過一個 instance profile 掛一個 role |
+| Security group | 只有 allow 規則；要 deny 用 NACL |
+| 跨 Region peering | SG 規則寫對方的 CIDR |
+| 加密既有的 RDS、EBS | Snapshot → 加密複製 → 還原成新的 |
+| 還原 RDS snapshot | 一定建立新的 instance |
+| RDS event notification | 通知維運事件：failover、備份、維護 |
+| Multi-AZ DB cluster | 支援 MySQL、PostgreSQL |
+| Aurora Global Database | 一個 writer Region，其他 Region 唯讀 |
+| Data Lifecycle Manager | 管 EBS snapshot 和 AMI；RDS 備份用 AWS Backup |
+| WAF | 關聯到 CloudFront、ALB、API Gateway、AppSync、Cognito 等資源；Global Accelerator、NLB 用 Shield Advanced 保護 |
+| Snowball 和 FSx | 先匯入 S3，FSx for Lustre 再連結 S3 |
+| Firehose 的目的地 | S3、Redshift、OpenSearch、Splunk、HTTP endpoint 等；寫 DynamoDB 用 Data Streams + Lambda |
+| S3 原生事件通知 | 目標是 SNS、SQS Standard、Lambda；其他目標經 EventBridge |
+| Lambda | 最長 15 分鐘；容器映像是 Linux |
+| Savings Plans | 用 discount sharing 在組織內共用；Standard RI 才能在 Marketplace 轉賣 |
+| 第三方 CA 的憑證 | 在外部簽好，再匯入 ACM |
+| Lambda function URL | 使用 AWS 產生的網址和憑證；要自訂網域就用 API Gateway 或 CloudFront |
+| Lifecycle 轉到 IA | 物件放滿 30 天才能轉；轉換日期要早於刪除日期 |
+| Legal hold | 一直有效，直到被移除；要固定期限用 retention period |
+| 規範 tag | Tag policy 規範值；擋下缺 tag 的建立用 SCP（`aws:RequestTag`）；自動加 tag 用 EventBridge + Lambda |
+| 排程維運工作 | State Manager、Automation 或 EventBridge Scheduler；Session Manager 用來登入 |
+| 寄 HTML email | SES；SNS 的 email 是純文字 |
+| STS | 發 IAM 臨時憑證；免金鑰登入 instance 用 Session Manager |
+| API Gateway 的 API key | 用於計量和節流；授權用 IAM、Cognito 或 Lambda authorizer |
 
 ### 決策卡
 
