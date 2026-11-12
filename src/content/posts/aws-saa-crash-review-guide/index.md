@@ -48,10 +48,10 @@ Sources: [KodeKloud SAA-C03 exam guide notes](https://notes.kodekloud.com/docs/A
 
 ### General rules of thumb
 
-- The answer is usually an AWS managed service, rarely "run it yourself on EC2".
-- "Cron job on EC2" is almost always wrong; replace it with EventBridge Scheduler + Lambda.
-- "Put the access key in the code or on the instance" is always wrong; use an IAM role.
-- Options full of manual steps or hand-written polling scripts → usually a trap.
+- The answer is usually an AWS managed service.
+- Scheduled jobs → EventBridge Scheduler + Lambda.
+- Code that accesses AWS → an IAM role.
+- Automation first: event triggers (EventBridge, S3 events) and managed features, with as few steps as possible.
 
 ## Identity and account governance
 

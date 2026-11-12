@@ -48,10 +48,10 @@ ai_assisted: true
 
 ### 通則
 
-- 答案通常是 AWS 託管服務，很少是「在 EC2 上自己架」。
-- 「Cron job on EC2」幾乎都是錯的，換成 EventBridge Scheduler + Lambda。
-- 「把 access key 寫在程式或 instance 裡」永遠是錯的，用 IAM role。
-- 選項裡出現大量手動步驟、自己寫腳本輪詢 → 通常是陷阱。
+- 答案通常是 AWS 託管服務。
+- 定時執行的工作 → EventBridge Scheduler + Lambda。
+- 程式要存取 AWS → IAM role。
+- 自動化優先：用事件觸發（EventBridge、S3 事件）和託管功能，步驟越少越好。
 
 ## 身分與帳號治理
 
