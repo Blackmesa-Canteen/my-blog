@@ -84,6 +84,9 @@ Core principles: least privilege, roles instead of long-lived access keys, and O
 - Mnemonic: **the role lives with the resource; the trust points at whoever is coming in.**
 - S3, SQS, SNS, KMS and others can also grant other accounts directly through a resource-based policy, no assume needed.
 - When giving a third-party vendor access, add an External ID to prevent the confused deputy problem.
+- A trust policy principal can't be an IAM group; trust an account or a role.
+- "Only accounts in our own Organization may access it" → a bucket policy with an `aws:PrincipalOrgID` condition, instead of listing account IDs.
+- An account belongs to one Organization at a time; to move, leave the old one and accept the new org's invitation. No need to recreate the account.
 
 ### Multi-account governance
 
@@ -95,6 +98,10 @@ Core principles: least privilege, roles instead of long-lived access keys, and O
 | IAM Identity Center (formerly AWS SSO) | Employees sign in once to reach many accounts and apps; connects to Active Directory / external IdP | single sign-on, workforce, multi-account login |
 | AWS RAM | Share resources across accounts (subnets, Transit Gateway, Route 53 Resolver rules) | share resources, not restrict permissions |
 | Tag policies | Standardize tags | enforce tagging |
+| Control Tower controls | Three kinds: preventive (SCP), detective (Config, finds issues after the fact), proactive (CloudFormation hooks, block before deployment) | block non-compliant resources before deployment → proactive |
+| IAM Access Analyzer | Finds resources shared outside the account and permissions that are never used | unused access, over-permissive |
+| IAM Roles Anywhere | On-prem servers exchange X.509 certificates for temporary AWS credentials | on-premises workloads, no long-term keys |
+| Customer-managed prefix list | A set of CIDRs, shared via RAM and referenced directly in security groups | office IP list shared across accounts |
 
 ### End-user identity (application side)
 
@@ -113,6 +120,11 @@ Mnemonic: **User Pool handles "who you are" (sign-in); Identity Pool handles "wh
 - "Block every account from a Region / service" → SCP.
 - "New accounts automatically get the guardrails" → Control Tower, or Organizations + SCP.
 - SCPs don't affect the management account or service-linked roles.
+- "Resources must carry a tag and its value must come from a list" → a tag policy sets the values, plus an SCP with an `aws:RequestTag` condition denying creation without the tag. A tag policy alone can't block a missing tag.
+- "Automatically tag new resources with the creator's cost center" → EventBridge (CloudTrail event) + Lambda. SCPs only allow or deny; they don't add tags.
+- "Block new provisioning automatically when the budget threshold is hit" → AWS Budgets actions, applying an IAM policy or SCP through an IAM role.
+- Already on IAM Identity Center → assign accounts with permission sets + groups; a new hire just joins a group. Don't hand-build roles or IAM users.
+- The root user can register up to 8 MFA devices, so losing one doesn't lock you out; Organizations can also manage member-account root access centrally.
 
 ## Security, encryption and compliance
 
@@ -131,8 +143,12 @@ This is the heaviest domain (30%). The key is knowing what each security service
 | Amazon Detective | Digs into the root cause of a security incident | investigate, root cause |
 | AWS Audit Manager | Collects audit evidence automatically (closed to new customers from 30 April 2026) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) | audit evidence |
 | AWS Artifact | Download AWS compliance reports (SOC, PCI, ISO) | compliance reports, agreements |
+| Amazon Security Lake | Centralizes security logs from all accounts into an OCSF-format data lake | security data lake, OCSF |
 
 Mnemonic: **Inspector finds vulnerabilities, GuardDuty catches bad actors, Macie finds personal data, Config watches settings, CloudTrail logs actions, Security Hub keeps the ledger.**
+
+- GuardDuty also has RDS Protection, which detects anomalous Aurora / RDS logins.
+- CVEs in container images → ECR scan on push (enhanced scanning is handled by Inspector).
 
 ### Protection against network attacks
 
@@ -146,12 +162,19 @@ Mnemonic: **Inspector finds vulnerabilities, GuardDuty catches bad actors, Macie
 
 Note: WAF cannot attach directly to an NLB or EC2.
 
+- WAF can't attach to Global Accelerator either. To protect GA, NLB, EIP → Shield Advanced; for WAF, attach it to the ALB behind them.
+- One WAF IP set holds up to 10,000 CIDRs, so large allow-lists go there rather than NACLs; allow only certain countries → geo match rule.
+- Quickly blocking a few known attacking IPs → NACL deny. With CloudFront in front, the NACL never sees the client IP, so use a WAF IP set.
+- "Private subnets may only reach approved domains" → Network Firewall domain lists. Security groups can't filter by domain.
+- NLBs can have security groups, but only if added at creation; adding them later means recreating the NLB.
+
 ### Encryption and keys
 
 | Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS KMS | Managed key service; most AWS encryption relies on it | encryption at rest, key rotation, key policy |
 | AWS CloudHSM | Dedicated hardware security module; you fully control the keys | FIPS 140-2 Level 3, single-tenant, full control of keys |
+| KMS External Key Store (XKS) | KMS keys backed by a key manager outside AWS (CloudHSM keys still live inside AWS) | keys must stay outside AWS |
 | AWS Certificate Manager (ACM) | Free public SSL/TLS certificates with auto-renewal | HTTPS, encryption in transit; works with ELB, CloudFront, API Gateway (the default free certs can't be exported or installed directly on EC2; since June 2025 you can pay for an "exportable" public cert for EC2, but exam questions still assume "can't be used on EC2" [↗](https://aws.amazon.com/about-aws/whats-new/2025/06/aws-certificate-manager-public-certificates-use-anywhere)) |
 | AWS Secrets Manager | Stores passwords and API keys, with automatic rotation (native for RDS, Redshift, DocumentDB) | rotate database credentials automatically |
 | SSM Parameter Store | Stores config values and secrets, cheap (standard tier free), no built-in rotation | configuration, cheap |
@@ -164,6 +187,10 @@ KMS points:
 - Question wants "control who can use the key", "audit key usage", "share encrypted data across accounts" → customer managed key.
 - KMS keys are Regional; cross-Region needs multi-Region keys or re-encryption in the target Region.
 - Direct encryption is capped at 4 KB; larger data uses envelope encryption (data keys).
+- Automatic rotation is configurable from 90 to 2560 days (default 365), with on-demand rotation too; AWS managed keys rotate yearly and you can't change that. "We must control rotation" → customer managed key.
+- Sharing an encrypted RDS snapshot or AMI with another account → it must use a customer managed key; add that account to the key policy, then share. Anything encrypted with an AWS managed key can't be shared.
+- Lambda or EC2 decrypting with KMS → the role needs `kms:Decrypt` and the key policy must allow that role; both sides.
+- Key deletion has a 7-30 day waiting period that can be cancelled. Guarding against accidental deletion → EventBridge on the deletion-scheduling API call → cancel automatically + SNS.
 
 ### S3 encryption options
 
@@ -175,6 +202,8 @@ KMS points:
 | SSE-C | You supply the key; AWS doesn't keep it | You must hold the key yourself |
 | Client-side | Encrypt before upload | Data must never reach AWS in plaintext |
 
+Heavy SSE-KMS request volume driving up KMS cost → turn on S3 Bucket Key. If the question requires KMS, switching to SSE-S3 to save money isn't allowed.
+
 ### Must-know traps
 
 - "Encrypt an existing unencrypted RDS instance" → take a snapshot → encrypt while copying the snapshot → restore from the encrypted snapshot. (Same for EBS.)
@@ -182,6 +211,12 @@ KMS points:
 - "Uploads must be encrypted" → bucket policy checking the encryption header, or just rely on default encryption.
 - "Detect someone turning off CloudTrail / changing config, and fix it automatically" → Config rules + auto-remediation (SSM Automation), or EventBridge + Lambda.
 - Tamper-proof CloudTrail → enable log file integrity validation, ship logs to S3 in another account and lock them (S3 Object Lock).
+- "Encrypt before the data reaches AWS", "even DBAs must not see plaintext" → client-side encryption. Every SSE option only encrypts once the data is in AWS.
+- "Every new EBS volume must be encrypted" → EBS encryption by default (account-level, set once per Region). A Config rule only detects after the fact.
+- RDS encryption in transit → the RDS CA certificate + a parameter that forces SSL (`rds.force_ssl` / `require_secure_transport`). IAM database authentication only handles login.
+- Kubernetes Secrets in EKS (stored in etcd) encrypted with your own key → EKS envelope encryption + KMS.
+- Third-party certificates imported into ACM don't renew automatically; ACM emits EventBridge events before expiry, which can go to SNS. ACM-issued public certificates renew fully automatically only with DNS validation (email validation needs someone to click each time).
+- Adaptive MFA for app users → Cognito user pool threat protection (formerly advanced security).
 
 ## Networking: VPC
 
@@ -195,10 +230,11 @@ VPC underpins every domain. Keep one storyline in mind: a public subnet has a ro
 | Subnet | A slice of the VPC; one subnet lives in one AZ | For HA, put a subnet in each of several AZs |
 | Internet Gateway (IGW) | The VPC's door to the internet | One per VPC; public subnet = route table has 0.0.0.0/0 → IGW |
 | NAT Gateway | Lets a private subnet initiate outbound traffic; nothing gets in | Lives in a public subnet; single-AZ, so one per AZ for HA; charged per hour + per GB |
+| Private NAT Gateway | Only for VPC-to-VPC or on-prem traffic | Can't give instances internet access |
 | NAT Instance | DIY NAT on EC2 | Legacy, needs source/dest check off, usually a wrong answer |
 | Egress-only IGW | NAT for IPv6 (outbound only) | IPv6 + outbound only |
 | Route Table | Decides where traffic goes | One associated per subnet |
-| Elastic IP | Static public IPv4 | Charged even when unused |
+| Elastic IP | Static public IPv4 | Charged even when unused; since February 2024 every public IPv4 address (in use or not) costs USD 0.005 per hour [↗](https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights) |
 | Bastion host | Jump box in a public subnet | SSM Session Manager is now preferred (no port 22, no keys) |
 
 ### Security Group vs NACL (always tested)
@@ -224,6 +260,9 @@ Mnemonic: **"block a specific IP" → NACL (SGs can't Deny). "Only the ALB may r
 - "Private subnet to S3, no public internet, cheapest" → S3 gateway endpoint.
 - "On-prem needs private access to S3" → S3 interface endpoint (gateway endpoints don't work from on-prem).
 - A bucket policy with `aws:SourceVpce` can restrict access to a specific endpoint.
+- Only S3 and DynamoDB have gateway endpoints; private access to SQS and other services → interface endpoints.
+- A gateway endpoint belongs to route tables, not to an AZ, and takes no security groups; an interface endpoint is an ENI in a subnet and does take SGs.
+- Fully private EKS cluster whose nodes can't join → add interface endpoints (ECR api / dkr, EC2, STS, CloudWatch Logs) + the S3 gateway endpoint.
 
 ### VPC to VPC
 
@@ -232,8 +271,11 @@ Mnemonic: **"block a specific IP" → NACL (SGs can't Deny). "Only the ALB may r
 | VPC Peering | Direct one-to-one link between two VPCs | Not transitive (A-B and B-C doesn't mean A-C); no overlapping CIDRs; works cross-account and cross-Region |
 | Transit Gateway | Hub-and-spoke for many VPCs and on-prem networks | Transitive routing, replaces a peering mesh; supports inter-Region peering, multicast |
 | PrivateLink (endpoint service) | Expose one service privately to other VPCs through an NLB | Exposes only the service, not the whole network; overlapping CIDRs are fine; common for SaaS vendors |
+| VPC Lattice | Service-to-service connectivity across VPCs and accounts, with discovery and auth | Cross-account microservices |
 
 Mnemonic: **a few VPCs → Peering; many VPCs + on-prem → Transit Gateway; sharing a single service → PrivateLink.**
+
+Cross-Region peering can't reference the peer's security group in SG rules; use its CIDR (same-Region peering can).
 
 ### Connecting to on-prem
 
@@ -245,8 +287,11 @@ Mnemonic: **a few VPCs → Peering; many VPCs + on-prem → Transit Gateway; sha
 | VPN as DX backup | DX primary, VPN backup | "cheap backup" |
 | Two DX connections (different locations) | Highest availability | "maximum resiliency" |
 | Direct Connect Gateway | One DX to VPCs in multiple Regions | multiple regions via DX |
+| DX gateway + transit VIF + Transit Gateway | One DX to many VPCs in many accounts, with VPC-to-VPC routing | DX + many VPCs (DX gateway + VGWs alone doesn't route VPC to VPC) |
 | AWS Client VPN | Individual laptops into a VPC | remote employees |
 | VPN CloudHub | Branch offices interconnected over VPN | hub-and-spoke for branch offices |
+
+- Bandwidth below 1 Gbps → a hosted connection through a DX Partner (dedicated connections start at 1 Gbps).
 
 ### Other networking points
 
@@ -255,6 +300,7 @@ Mnemonic: **a few VPCs → Peering; many VPCs + on-prem → Transit Gateway; sha
 - Reachability Analyzer: works out why two resources can't reach each other.
 - Traffic Mirroring: copies traffic to inspection appliances.
 - Traffic within an AZ is free; cross-AZ and cross-Region is charged; data into AWS is free, data out is charged.
+- VPC running out of IPs → add a secondary CIDR and create subnets in it. A VPC can only be /16 to /28.
 
 ## Compute
 
@@ -285,6 +331,8 @@ Order of preference: serverless where possible (Lambda → Fargate), EC2 only fo
 
 Mnemonic: **steady → Savings Plans / RI; interruptible → Spot; licence tied to cores → Dedicated Hosts; guaranteed machines → Capacity Reservation.**
 
+- Regional RIs and Savings Plans give a discount, not reserved capacity. Capacity guaranteed in a specific AZ → Capacity Reservation.
+
 ### Placement groups
 
 | Type | Layout | Use |
@@ -301,6 +349,8 @@ Mnemonic: **steady → Savings Plans / RI; interruptible → Spot; licence tied 
 - Hibernate: saves RAM to the encrypted EBS root volume for faster start (back to the pre-hibernate state).
 - EC2 Instance Connect / Session Manager: log in without managing SSH keys.
 - Elastic Network Adapter / EFA: EFA is for HPC and tightly coupled parallel workloads (MPI).
+- An EC2 instance takes exactly one IAM role (one instance profile).
+- Volumes created from an AMI are slow on first read → EBS fast snapshot restore.
 
 ### Auto Scaling
 
@@ -317,6 +367,8 @@ Mnemonic: **steady → Savings Plans / RI; interruptible → Spot; licence tied 
 - Warm pools: pre-initialized instances to cut launch time.
 - "Instances boot too slowly to keep up with scaling" → pre-baked AMI (golden image), warm pools, or scheduled / predictive scaling.
 - Lifecycle hooks: run an action before an instance launches or terminates (e.g. ship logs before termination).
+- An ASG can't span Regions.
+- Stateful and always needs at least 2 instances → 2 On-Demand in each of two AZs, so losing an AZ still leaves 2. No Spot for stateful work.
 
 ### Lambda
 
@@ -331,6 +383,10 @@ Mnemonic: **steady → Savings Plans / RI; interruptible → Spot; licence tied 
 | Connecting to RDS | Use RDS Proxy so a flood of connections doesn't overwhelm the database |
 | In a VPC | Can attach to a VPC to reach private resources; needs a NAT Gateway for internet |
 | Triggers | S3, DynamoDB Streams, Kinesis, SQS, SNS, EventBridge, API Gateway, ALB |
+| Java cold starts | SnapStart, cheaper than Provisioned Concurrency |
+| Just one HTTPS endpoint | Function URL (can use `AWS_IAM` auth); a webhook doesn't need API Gateway |
+| Invoked by EventBridge, S3, SNS | Authorized by the function's resource-based policy, not the execution role |
+| Container images | Linux only; Windows containers go to ECS on Fargate |
 
 Lambda@Edge / CloudFront Functions: run code at CloudFront edge locations. CloudFront Functions are lighter and cheaper (header changes, URL rewrites); Lambda@Edge does more (network calls, longer runtime).
 
@@ -344,8 +400,15 @@ Lambda@Edge / CloudFront Functions: run code at CloudFront edge locations. Cloud
 | ECS on EC2 | You manage the EC2 cluster | Need GPUs, special instances, fine-grained cost control |
 | Amazon ECR | Container image registry | Store Docker images |
 | EKS Anywhere / ECS Anywhere | Run on-prem | On-prem data centre |
+| EKS on Fargate | Kubernetes without managing nodes | No worker nodes to manage |
+| EKS Connector | Shows any Kubernetes cluster in the EKS console | One view of on-prem clusters |
+| App2Container | Containerizes legacy .NET / Java apps | containerize legacy apps |
 
 **ECS permissions:** the task role is what code inside the container uses to call AWS; the task execution role is what ECS uses to pull images and write logs.
+
+- EKS pods need AWS permissions → IRSA or EKS Pod Identity, not permissions on the whole node role.
+- EKS scaling: HPA scales pods, Cluster Autoscaler (or Karpenter, EKS Auto Mode) scales nodes. ALB through Ingress → AWS Load Balancer Controller.
+- Fargate ephemeral storage goes up to 200 GiB; for more, or for sharing → mount EFS.
 
 ### Other compute
 
@@ -381,9 +444,12 @@ Mnemonic: **unknown access pattern → Intelligent-Tiering; re-creatable → One
 
 - Lifecycle rules: transition storage class or expire by age; can also delete old versions and clean up incomplete multipart uploads.
 - Objects must sit in Standard for at least 30 days before transitioning to Standard-IA / One Zone-IA.
+- Since September 2024, Lifecycle by default doesn't transition objects smaller than 128 KB [↗](https://aws.amazon.com/about-aws/whats-new/2024/09/amazon-s3-default-minimum-object-size-lifecycle-transition-rules). Bundle lots of small files first, or add an object size filter to the rule.
+- With versioning on, a lifecycle rule that "deletes" current versions only adds delete markers; to actually free space, also set noncurrent version expiration (`NewerNoncurrentVersions` keeps the latest few).
 - Versioning: protects against accidental delete/overwrite; a delete just adds a delete marker. Once enabled it can only be suspended, never turned off.
 - MFA Delete: deleting versions or changing versioning state requires MFA (only root can configure it).
 - Object Lock (WORM, write once read many): Governance mode can be lifted by users with special permissions; Compliance mode can't be deleted even by root until retention ends. Legal hold has no expiry.
+- Object Lock requires versioning. Applying retention to existing objects → S3 Batch Operations. Grant `s3:PutObjectLegalHold` to whoever needs to release a legal hold.
 - Glacier Vault Lock: WORM policy on a vault, unchangeable once locked. It belongs to the old standalone Amazon Glacier service, which closed to new customers in November 2025; new designs use S3 Glacier storage classes + Object Lock (the S3 Glacier storage classes themselves are unaffected) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html).
 
 Mnemonic: **regulation says "nobody can delete it" → Object Lock Compliance mode.**
@@ -394,6 +460,7 @@ Mnemonic: **regulation says "nobody can delete it" → Object Lock Compliance mo
 - Versioning must be on for both source and destination buckets.
 - Only new objects after enabling are replicated; existing objects need S3 Batch Replication.
 - S3 RTC (Replication Time Control): 99.99% of objects replicated within 15 minutes.
+- Writes to the nearest Region, one global endpoint, with failover → S3 Multi-Region Access Points + two-way CRR.
 
 ### S3 access and security
 
@@ -418,6 +485,8 @@ Mnemonic: **regulation says "nobody can delete it" → Object Lock Compliance mo
 - Requester Pays: the requester pays download costs.
 - Static website hosting: serve a static site; add CloudFront for HTTPS.
 - S3 is strongly consistent (read-after-write returns the latest data).
+- S3 Inventory: lists objects with their encryption status; with Batch Operations it can encrypt existing objects in bulk.
+- Global users uploading and downloading → Transfer Acceleration for uploads, CloudFront for downloads.
 
 ### EBS and Instance Store
 
@@ -433,6 +502,10 @@ Mnemonic: **regulation says "nobody can delete it" → Object Lock Compliance mo
 - Automated snapshots → Data Lifecycle Manager or AWS Backup.
 - Encrypt an unencrypted volume → snapshot → encrypted copy → new volume.
 - HDDs (st1, sc1) can't be boot volumes.
+- Multi-Attach is io1 / io2 only, same AZ only, and the file system must be cluster-aware.
+- io1 not fast enough → io2 Block Express, or several volumes in RAID 0.
+- Keeping snapshots long term → EBS Snapshots Archive (about 75% cheaper, 90-day minimum, 24-72 hour restore). Snapshots can't be moved straight into Glacier.
+- Accidentally deleted snapshots or AMIs → Recycle Bin (retention rules, recoverable after deletion); "must be impossible to delete" → EBS Snapshot Lock.
 
 ### File storage
 
@@ -445,6 +518,10 @@ Mnemonic: **regulation says "nobody can delete it" → Object Lock Compliance mo
 | FSx for OpenZFS | NFS | Migrating on-prem ZFS |
 
 Mnemonic: **Linux shared → EFS; Windows shared → FSx for Windows; HPC → FSx for Lustre; NetApp → FSx for ONTAP.**
+
+- Read-only EFS → a file system policy that denies `elasticfilesystem:ClientWrite`.
+- FSx for Lustre: scratch is cheap but doesn't replicate; for HA and long-term use → persistent. Snowball can't import into FSx directly; land the data in S3, then link Lustre to the bucket.
+- FSx for NetApp ONTAP: cross-Region DR with SnapMirror; it can also provide Multi-AZ block storage over iSCSI.
 
 ### Storage Gateway (hybrid storage)
 
@@ -472,6 +549,9 @@ Start from the data model: relational → RDS / Aurora; key-value, massive scale
 
 Mnemonic: **Multi-AZ keeps you alive; Read Replicas take the load.** "Reporting queries slow the primary down" → Read Replica; "must survive an AZ failure" → Multi-AZ.
 
+- Multi-AZ DB cluster (MySQL and PostgreSQL only): 1 writer + 2 readable standbys, failover usually within 35 seconds. For "HA + some extra reads + cheap", it beats a Multi-AZ instance plus 2 Read Replicas.
+- Automated backups (retention > 0) must be on before you can create a Read Replica. Replicas are read-only; writes can't go there.
+
 ### Amazon RDS
 
 - Engines: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, Db2.
@@ -482,6 +562,12 @@ Mnemonic: **Multi-AZ keeps you alive; Read Replicas take the load.** "Reporting 
 - IAM database authentication: log in to the database with an IAM token (MySQL, PostgreSQL).
 - RDS Custom: Oracle or SQL Server when you need OS access (RDS Custom for Oracle entered its Sunset phase in March 2026; SQL Server is still offered) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html).
 - Blue/Green Deployments: stand up a green environment for upgrades or schema changes, switch over quickly and safely.
+- Automated backups keep at most 35 days; 90 days or 7 years → AWS Backup.
+- A stopped RDS instance starts itself again after 7 days. Used a few days a month → snapshot and delete, restore when needed; used at fixed hours daily → scheduled start/stop.
+- Write-heavy and a cache doesn't help (caches only help reads) → Provisioned IOPS (io1 / io2).
+- Moving to Aurora with minimal downtime → create an Aurora read replica, let it sync, then promote it.
+- SQL Server to Aurora PostgreSQL without major code changes → Babelfish. Ongoing replication with variable load → DMS Serverless.
+- Lambda flooding the database with writes, or writes must survive an upgrade → put SQS in front as a buffer. RDS Proxy only holds connections briefly; it doesn't store writes.
 
 ### Amazon Aurora
 
@@ -491,10 +577,12 @@ Mnemonic: **Multi-AZ keeps you alive; Read Replicas take the load.** "Reporting 
 | Storage | Auto-grows to 256 TiB (raised from 128 TiB in 2025; older material says 128 TiB) [↗](https://aws.amazon.com/es/about-aws/whats-new/2025/07/amazon-aurora-postgresql-database-clusters-256-tib-storage-volume/), 6 copies across 3 AZs |
 | Replicas | Up to 15 Aurora Replicas, failover usually within 30 seconds |
 | Endpoints | Writer endpoint, Reader endpoint (load-balances reads), Custom endpoint (a chosen set of replicas, e.g. for reporting) |
-| Aurora Serverless v2 | Unpredictable, intermittent load; capacity adjusts automatically |
+| Aurora Serverless v2 | Unpredictable, intermittent load; capacity adjusts automatically; since November 2024 it can scale to 0 ACU and pause [↗](https://aws.amazon.com/about-aws/whats-new/2024/11/amazon-aurora-serverless-v2-scaling-zero-capacity) (v1 is retired; read "Aurora Serverless" in questions as v2) |
 | Aurora Global Database | Cross-Region replication lag usually under 1 second, secondary Region can be promoted quickly; cross-Region DR with RPO in seconds, RTO in minutes |
 | Aurora Cloning | Quickly clone a database for testing without a full copy |
 | Backtrack | "Rewind" the database to a point in time (MySQL-compatible edition) |
+| I/O-Optimized | Switch when I/O charges exceed roughly 25% of spend; no per-I/O charges |
+| Headless secondary | Global Database secondary Region with storage only and no instances; the cheapest cross-Region DR, at the cost of a longer RTO |
 
 ### Amazon DynamoDB
 
@@ -507,9 +595,11 @@ Mnemonic: **Multi-AZ keeps you alive; Read Replicas take the load.** "Reporting 
 | Global Tables | **Multi-Region, multi-active (active-active)** replication |
 | DynamoDB Streams | Change event stream, can trigger Lambda |
 | TTL | Automatically delete expired items (sessions, temporary data) |
-| Backup | PITR (up to 35 days), on-demand backups; export to S3 |
+| Backup | PITR (up to 35 days), on-demand backups; with PITR on, export to S3 without consuming RCUs, then analyze with Athena / Glue |
 | Indexes | GSI can be added any time, different partition key; LSI only at table creation, same partition key |
 | Transactions | Supports ACID transactions |
+| Consistency | Eventually consistent by default; stale reads → strongly consistent reads |
+| Deletion protection | Prevents accidental table deletion |
 
 ### Amazon ElastiCache
 
@@ -564,6 +654,10 @@ ELB points:
 - SSL offloading: terminate HTTPS at the ELB (cert in ACM) to lighten the backend; SNI for multiple domains.
 - Backend behind an ALB needs the client's real IP → read the `X-Forwarded-For` header.
 - "ALB needs a static IP" → put an NLB or Global Accelerator in front of it.
+- HTTP to HTTPS → ALB listener redirect rule.
+- A few backends get hammered → switch to the least outstanding requests algorithm, or check whether sticky sessions are the cause.
+- Investigating unusual traffic → ALB access logs in S3 + Athena. CloudTrail doesn't record HTTP requests.
+- The ACM certificate for an ALB must be in the same Region.
 
 ### Route 53
 
@@ -584,6 +678,8 @@ Route 53 points:
 - Health checks: can check endpoints, other health checks (calculated), or CloudWatch alarms (for private resources).
 - Private hosted zone: private DNS inside a VPC.
 - Hybrid DNS → Route 53 Resolver inbound / outbound endpoints.
+- Moving from another DNS provider → create a hosted zone and import the zone file.
+- Geolocation goes by country or continent; routing to the nearest Region by distance → geoproximity or latency.
 
 ### CloudFront
 
@@ -596,6 +692,10 @@ Route 53 points:
 - Origin failover (origin group): switch to a secondary origin when the primary fails.
 - Pair with WAF and Shield for edge protection; edge compute with CloudFront Functions / Lambda@Edge.
 - Cache invalidation: clear the cache after updating content, or version the file names.
+- The ACM certificate for CloudFront must be in us-east-1.
+- Responses with `Cache-Control: private` aren't cached.
+- Different content per language or device → add a header to the cache key (e.g. `Accept-Language`), or use Lambda@Edge on `User-Agent`.
+- No UDP, and RTMP support ended long ago.
 
 ### Global Accelerator vs CloudFront
 
@@ -607,6 +707,8 @@ Route 53 points:
 | Good for | Websites, video, static files, API caching | Gaming, IoT, VoIP, static IP allow-lists, fast cross-Region failover (seconds, unaffected by DNS caching) |
 
 Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast cross-Region failover → Global Accelerator.**
+
+Global Accelerator endpoints can only be ALB, NLB, EC2 or EIP, never S3. Need WAF and static IPs → GA in front, ALB behind it, WAF on the ALB.
 
 ## Decoupling and integration
 
@@ -637,12 +739,16 @@ Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast 
 - Delay queue: messages invisible for up to 15 minutes.
 - Max message size: raised to 1 MiB in August 2025 (older material and question banks say 256 KB) [↗](https://aws.amazon.com/about-aws/whats-new/2025/08/amazon-sqs-max-payload-size-1mib); larger payloads go in S3 with a pointer in SQS (Extended Client Library).
 - Scale EC2 on queue depth: target tracking on the CloudWatch metric `ApproximateNumberOfMessagesVisible` (or backlog per instance).
+- With Lambda consuming SQS, AWS suggests a visibility timeout of 6 times the function timeout. Long polling doesn't fix duplicate processing.
+- The FIFO deduplication window is 5 minutes (deduplication ID or content hash).
 
 ### SNS
 
 - SNS + SQS fan-out: one event to several SQS queues, each processed independently (e.g. an order going to shipping, billing and analytics at once).
 - Message filtering: subscribers only receive matching messages.
 - SNS FIFO topics: preserve ordering together with SQS FIFO.
+- Keeping messages that failed delivery → subscription DLQ (SQS). Failed asynchronous Lambda invocations → on-failure destination.
+- SNS email is plain text only; HTML reports → SES.
 
 ### EventBridge
 
@@ -652,6 +758,10 @@ Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast 
 - Archive & replay: store and replay events.
 - Pipes: point-to-point source-to-target, with filtering and transformation in between.
 - Common pattern: "handle it automatically when EC2 state changes / GuardDuty finds something / an S3 object is created" → EventBridge rule + Lambda.
+- Input transformer: send only the fields a target needs (SNS filtering selects messages; it doesn't trim them).
+- API destinations: send events to external HTTP APIs (with basic auth or an API key).
+- One S3 event to several targets → turn on S3 → EventBridge. Native S3 notifications allow one destination per event type / prefix.
+- Did a rule fire, did the target fail → CloudWatch `AWS/Events` metrics (TriggeredRules, Invocations, FailedInvocations).
 
 ### Step Functions
 
@@ -659,6 +769,7 @@ Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast 
 - Standard workflow: up to 1 year, exactly-once execution; long processes, approvals.
 - Express workflow: up to 5 minutes, high throughput; large volumes of short events.
 - Keywords: orchestrate, workflow, several Lambdas in sequence, needs human approval.
+- Distributed Map: process huge numbers of S3 objects in parallel (up to 10,000 parallel child workflows); inline Map concurrency is about 40.
 
 ### API Gateway
 
@@ -674,6 +785,8 @@ Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast 
 - Auth: IAM, Cognito User Pool authorizer, Lambda authorizer (custom token logic).
 - Integration timeout defaults to 29 seconds (since June 2024, Regional / Private REST APIs can request an increase) [↗](https://aws.amazon.com/about-aws/whats-new/2024/06/amazon-api-gateway-integration-timeout-limit-29-seconds/); long jobs should still go async (push to SQS / Step Functions and respond immediately).
 - Classic serverless stack: API Gateway + Lambda + DynamoDB.
+- New version on a slice of traffic first → canary release; reaching containers in private subnets → VPC link; restricting source IPs → resource policy (`aws:SourceIp`).
+- ACM certificate for a custom domain: edge-optimized needs us-east-1, Regional needs the same Region.
 
 ### Other integration services
 
@@ -682,7 +795,7 @@ Mnemonic: **cacheable → CloudFront; not cacheable, static IPs, non-HTTP, fast 
 | Amazon MQ | Managed ActiveMQ / RabbitMQ | Migrating from on-prem, no code changes, standard protocols like AMQP, MQTT, STOMP, OpenWire |
 | AWS AppSync | Managed GraphQL APIs | GraphQL, real-time data sync, offline mobile apps |
 | Amazon SES | Bulk email sending | Transactional email, marketing email |
-| AWS AppFlow | Data transfer between SaaS (Salesforce, SAP, Slack) and AWS | SaaS data integration, no code |
+| AWS AppFlow | Data transfer between SaaS (Salesforce, SAP, Slack) and AWS, optionally over PrivateLink instead of the internet | SaaS data integration, no code |
 
 Mnemonic: **new systems use SQS / SNS; existing on-prem ActiveMQ / RabbitMQ moving up without code changes → Amazon MQ.**
 
@@ -703,6 +816,9 @@ Remember the four stages of a data flow: Ingest → Process → Store → Analyz
 
 Mnemonic: **real-time with replay → Data Streams; just get it into S3 / Redshift with no fuss → Firehose; Kafka → MSK.**
 
+- Firehose can't deliver to DynamoDB; to write DynamoDB → Data Streams + Lambda.
+- Firehose converts to Parquet / ORC natively (record format conversion, using a Glue Data Catalog schema).
+
 ### Processing and transformation
 
 | Service | What it does | Keywords |
@@ -713,12 +829,15 @@ Mnemonic: **real-time with replay → Data Streams; just get it into S3 / Redshi
 | AWS Lambda | Lightweight real-time transforms | Per-event processing, under 15 minutes |
 | AWS Batch | Batch computing | Large parallel jobs |
 
+- A Glue job keeps reprocessing old data → job bookmarks.
+- EMR clusters: primary and core nodes (core holds HDFS) On-Demand, task nodes on Spot.
+
 ### Storage and analysis
 
 | Service | What it does | Keywords |
 | --- | --- | --- |
 | Amazon S3 | The core of a data lake | Raw data, any format, cheap |
-| AWS Lake Formation | Build a data lake fast, central fine-grained permissions (column, row level) | build data lake, fine-grained access control |
+| AWS Lake Formation | Build a data lake fast, central fine-grained permissions: data filters for row, column and cell level; LF-TBAC grants by tag across accounts; blueprints ingest from databases | build data lake, fine-grained access control |
 | Amazon Athena | Serverless SQL directly on S3, billed by data scanned | Ad-hoc queries, querying logs (CloudTrail, ALB, VPC Flow Logs) |
 | Amazon Redshift | Data warehouse (OLAP, columnar), petabyte scale; Redshift Serverless available | complex analytics, BI, data warehouse |
 | Redshift Spectrum | Redshift queries S3 directly without loading | Warehouse data + S3 data together |
@@ -733,6 +852,7 @@ Redshift points:
 - Cross-Region snapshot copy for DR.
 - Zero-ETL integration: data from Aurora, RDS, DynamoDB syncs into Redshift automatically, no hand-written ETL.
 - Concurrency scaling: adds capacity automatically during query peaks.
+- Redshift ML: create and use machine learning models in SQL.
 
 ### Data lake vs data warehouse
 
@@ -752,6 +872,7 @@ Redshift points:
 - Clickstream analytics: Kinesis Data Streams → Managed Flink → Firehose → S3 / Redshift
 - Query AWS logs: logs in S3 → Athena
 - IoT: IoT Core → Kinesis / Firehose → S3 → Athena / QuickSight
+- Billing analysis: CUR (now Data Exports / CUR 2.0) in S3 → Athena → QuickSight
 
 ## Monitoring and operations
 
@@ -768,6 +889,8 @@ Keep them apart: CloudWatch for performance and logs, CloudTrail for who did wha
 | Dashboards | Dashboards | Cross-account, cross-Region |
 | Synthetics | Canary scripts that simulate users on a schedule | Proactive availability monitoring |
 | Container Insights / Lambda Insights | Detailed container and Lambda metrics | ECS, EKS monitoring |
+| Dashboard sharing | Share with people who have no AWS account (email, public link) | No IAM user needed for them |
+| Cross-account observability | One monitoring account sees many accounts | Multi-account monitoring |
 
 - "EC2 memory utilization" → CloudWatch agent (not a default metric).
 - "Auto-recover EC2 from hardware failure" → CloudWatch alarm + recover action (keeps the IP and instance ID).
@@ -780,19 +903,21 @@ Keep them apart: CloudWatch for performance and logs, CloudTrail for who did wha
 - Data events (S3 object-level, Lambda invocations) are off by default and must be enabled.
 - CloudTrail Insights: detects unusual API activity volumes.
 - "Who deleted this resource?" → CloudTrail.
+- "Who changed the security group" → CloudTrail; "does any SG open port 22 to 0.0.0.0/0" → Config managed rule `restricted-ssh`.
 
 ### Systems Manager (SSM)
 
 | Feature | What it does |
 | --- | --- |
-| Session Manager | Log in to instances without opening SSH or using keys, with an audit trail |
-| Run Command | Run commands across many instances at once |
+| Session Manager | Log in to instances without opening SSH or using keys, with an audit trail; session logs can go straight to S3 / CloudWatch Logs |
+| Run Command | Run commands across many instances at once (also for patching third-party software "right now"; Patch Manager patches the OS on a schedule against baselines) |
 | Patch Manager | Automated OS patching for Windows / Linux |
 | Inventory | Collects software and configuration inventory from instances |
 | State Manager | Keeps instances in a defined configuration |
 | Automation | Automated runbooks; also used for Config remediation |
 | Parameter Store | Stores config and secrets |
 | Maintenance Windows | Scheduled maintenance windows |
+| Default Host Management Configuration | Account-level setting that lets SSM manage instances without changing each instance profile |
 
 - Works for on-prem servers too (install the SSM Agent, register as a hybrid managed node).
 - "Automated patching + inventory + vulnerability reporting" → Patch Manager + Inspector.
@@ -815,8 +940,10 @@ Keep them apart: CloudWatch for performance and logs, CloudTrail for who did wha
 | AWS Trusted Advisor | Best-practice checks across cost, performance, security, fault tolerance and service limits, with recommendations (full checks need Business support or higher) |
 | AWS Health Dashboard | AWS service events and maintenance notices affecting your resources; automate with EventBridge |
 | Service Quotas | View and request increases to service limits |
-| AWS Compute Optimizer | Rightsizing recommendations and estimated savings for EC2, EBS, Lambda, ECS on Fargate based on usage |
+| AWS Compute Optimizer | Rightsizing recommendations and estimated savings for EC2, EBS, Lambda, ECS on Fargate based on usage (Lambda short on CPU → raise memory, vCPU rises with it) |
 | AWS Well-Architected Tool | Review architectures against the six pillars |
+| Resource Groups Tag Editor | Find and edit resources with a given tag across Regions and services |
+| Workload Discovery on AWS | Diagrams resource relationships across accounts and Regions |
 
 **The six Well-Architected pillars:** Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability.
 
@@ -860,9 +987,13 @@ Mnemonic (cheapest to priciest): **backup → pilot light → warm standby → a
 
 | Service | What it does | Keywords |
 | --- | --- | --- |
-| AWS Backup | Central backup plans across many services (EC2, EBS, RDS, Aurora, DynamoDB, EFS, FSx, S3) | centralized backup, cross-account, cross-Region copy |
-| AWS Backup Vault Lock | Backups that can't be deleted (WORM) | Ransomware protection, regulation |
+| AWS Backup | Central backup plans across many services (EC2, EBS, RDS, Aurora, DynamoDB, EFS, FSx, S3); selecting an EC2 instance creates an AMI; lifecycle to cold storage | centralized backup, cross-account, cross-Region copy, long retention |
+| AWS Backup Vault Lock | Backups that can't be deleted (WORM); compliance mode can't be undone by anyone, governance mode can be lifted by privileged users | Ransomware protection, regulation |
 | AWS Elastic Disaster Recovery (DRS) | Continuously replicates servers (on-prem or cloud) to AWS, RPO in seconds, RTO in minutes | Server-level DR, on-prem DR to AWS |
+| Data Lifecycle Manager | Automated EBS snapshots and AMIs (not RDS) | EBS snapshot schedules |
+
+- RDS with a 24-hour RPO and RTO → copying automated snapshots to another Region is enough; no cross-Region replica needed.
+- Stateless tiers don't need EBS backups; keep a current AMI.
 
 ### HA design checklist
 
@@ -900,12 +1031,14 @@ First identify what's moving: servers → MGN; databases → DMS (+ SCT); files 
 
 Mnemonic: **same engine (MySQL → RDS MySQL) only needs DMS; different engines (Oracle → PostgreSQL) need SCT to convert the schema + DMS to move the data.**
 
+- MGN steps: install the replication agent → continuous replication → test launch → cutover.
+
 ### Data transfer
 
 | Service | What it does | Keywords |
 | --- | --- | --- |
 | AWS DataSync | Automated online file transfer (NFS, SMB, HDFS, object storage) to S3, EFS, FSx, and between AWS services; encryption, verification, scheduling | online transfer, scheduled sync, moving a NAS |
-| AWS Transfer Family | Managed SFTP / FTPS / FTP / AS2 servers backed by S3 or EFS | Partners uploading files over SFTP |
+| AWS Transfer Family | Managed SFTP / FTPS / FTP / AS2 servers backed by S3 or EFS; AD or a Lambda custom IdP for auth; VPC-hosted endpoints with EIPs + SGs to restrict source IPs; managed workflows for post-upload steps | Partners uploading files over SFTP |
 | Snowball Edge | Offline physical transfer device, TB to PB scale; Compute Optimized variant for edge compute (closed to new customers from 7 November 2025) [↗](https://docs.aws.amazon.com/snowball/latest/developer-guide/snowball-edge-availability-change.html) | Network too slow, would take weeks, no connectivity, remote sites |
 | S3 Transfer Acceleration | Faster long-distance uploads to S3 | Global users uploading to one bucket |
 | Direct Connect | Long-term dedicated line | Sustained high-volume transfer |
@@ -915,6 +1048,9 @@ The Snow family has shrunk a lot: Snowcone and Snowmobile are discontinued, and 
 - Deciding on Snowball: work out "data volume ÷ available bandwidth"; if the network transfer would take more than a week or would hurt normal business traffic → Snowball.
 - "One-off bulk move + ongoing sync afterwards" → Snowball for the bulk, then DataSync or DMS for the deltas.
 - "Sync an on-prem NAS to EFS / S3 on a schedule" → DataSync (not Storage Gateway; Storage Gateway is for on-prem using cloud storage long-term).
+- Bandwidth math: Mbps ÷ 8 = MB/s. 100 Mbps ≈ 1 TB a day; 1 Gbps ≈ 10.8 TB a day (theoretical; expect 70-80%). Example: 600 TB over 100 Mbps takes over a year and a half.
+- A new Direct Connect takes weeks; questions with a short deadline can't rely on a new line.
+- DataSync can throttle bandwidth, transfer only changed files, and verifies integrity; moving to FSx for Windows preserves ACLs.
 
 ### DataSync vs Storage Gateway vs Transfer Family
 
@@ -938,6 +1074,8 @@ Cost questions follow a fixed pattern: commitment discounts for steady load, Spo
 | Very low or intermittent usage | Lambda, Fargate, Aurora Serverless v2 |
 | Oversized, low-utilization instances | Compute Optimizer rightsizing |
 | Switch to Graviton (ARM) instances | Same performance, cheaper |
+| Runs a few hours on the same day every week | Scheduled start/stop or Savings Plans (Scheduled Reserved Instances are no longer sold) |
+| Steady Fargate load + bursts | Capacity provider: Fargate for the base, Fargate Spot for the burst |
 
 ### Storage savings
 
@@ -958,13 +1096,14 @@ Cost questions follow a fixed pattern: commitment discounts for steady load, Spo
 - Cut cross-AZ traffic: keep chatty components in the same AZ (without sacrificing HA).
 - If a NAT Gateway per VPC is too expensive, consider centralizing egress (shared via Transit Gateway), but if the question wants HA you still need one per AZ.
 - Long-term high-volume transfer → Direct Connect has lower data-out rates than the internet.
+- S3 downloads to two continents cost too much → CloudFront (S3 to CloudFront transfer is free, and CloudFront egress is cheaper than S3's). Transfer Acceleration costs extra to speed up uploads; it doesn't save money.
 
 ### Cost management tools
 
 | Service | What it does | Keywords |
 | --- | --- | --- |
-| AWS Cost Explorer | Visualize past spend, forecast, Savings Plans / RI purchase recommendations | analyze costs, forecast |
-| AWS Budgets | Set budgets, alert on actual or forecast overruns, take automatic actions (apply an IAM policy, stop instances) | alert when exceeding budget |
+| AWS Cost Explorer | Visualize past spend, forecast (also via API), Savings Plans / RI purchase recommendations | analyze costs, forecast |
+| AWS Budgets | Set budgets, alert on actual or forecast overruns, take automatic actions (apply an IAM policy or SCP, stop instances); can also track Savings Plans / RI coverage | alert when exceeding budget |
 | AWS Cost and Usage Report (CUR) / Data Exports | The most detailed billing data, queryable with Athena | detailed billing data |
 | Cost Allocation Tags | Attribute costs to departments or projects by tag | chargeback, per-department split |
 | AWS Cost Anomaly Detection | ML-based detection of unusual spend | unexpected spend |
@@ -978,6 +1117,9 @@ Cost features in Organizations:
 
 - Consolidated billing: all accounts billed together, combined usage earns tiered discounts.
 - RI and Savings Plans discounts are shared across accounts in the organization.
+- Savings Plans scope: Compute SP = EC2 + Fargate + Lambda; EC2 Instance SP = one instance family in one Region; SageMaker SP covers only SageMaker; RDS uses RDS Reserved Instances.
+- Savings Plans can't be resold; one account can't use all of its plan → turn on discount sharing in the management account.
+- User-defined cost allocation tags must be activated in the management account before they show up in billing and Cost Explorer.
 
 ## AI / ML services at a glance
 
@@ -985,23 +1127,27 @@ SAA only tests "which service does what", not model details. The question descri
 
 | Service | What it does | Question keywords |
 | --- | --- | --- |
-| Amazon Rekognition | Image and video recognition: faces, objects, inappropriate content | image / video analysis, face detection, content moderation |
+| Amazon Rekognition | Image and video recognition: faces, objects, inappropriate content; low-confidence results can go to Amazon A2I for human review | image / video analysis, face detection, content moderation |
 | Amazon Textract | Extracts text, tables and form fields from scanned documents | extract text from scanned documents, forms, invoices |
 | Amazon Comprehend | Text analysis: sentiment, key phrases, entities, language | sentiment analysis, NLP |
 | Amazon Comprehend Medical | Medical text extraction (drugs, conditions in medical records) | medical records |
-| Amazon Transcribe | Speech to text | speech-to-text, subtitles, call transcripts |
+| Amazon Transcribe | Speech to text; can redact personal data (PII redaction) and tell speakers apart (speaker diarization) | speech-to-text, subtitles, call transcripts |
 | Amazon Polly | Text to speech | text-to-speech |
 | Amazon Translate | Translation | translate languages |
 | Amazon Lex | Chatbots (voice and text conversation) | chatbot, conversational interface |
 | Amazon Kendra | Intelligent search over internal enterprise documents (closed to new customers from 30 July 2026) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) | enterprise search, natural-language Q&A |
 | Amazon Personalize | Personalized recommendations | recommendations |
-| Amazon Forecast | Time-series forecasting (no longer offered to new customers; may appear in old questions) | demand forecasting |
+| Amazon Forecast | Time-series forecasting (no longer offered to new customers; may appear in old questions; today use SageMaker Canvas) | demand forecasting |
 | Amazon Fraud Detector | Online fraud detection (no longer offered to new customers; may appear in old questions) | fraud |
 | Amazon SageMaker AI | Platform to build, train and deploy your own ML models | build / train / deploy custom ML models |
 | Amazon Bedrock | Generative AI foundation models via API (including Claude) | generative AI, foundation models, RAG |
 | Amazon Q | Generative AI assistant (Q Developer for developers; Q Business closed to new customers from 30 July 2026, folded into Amazon Quick) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) | AI assistant |
+| AWS Elemental MediaConvert | Video transcoding (replaces Elastic Transcoder, discontinued 13 November 2025) [↗](https://aws.amazon.com/blogs/media/support-for-amazon-elastic-transcoder-ending-soon) | video transcoding |
+| AWS End User Messaging | SMS, voice and push APIs (where Pinpoint's messaging went after its end of support on 30 October 2026) [↗](https://docs.aws.amazon.com/pinpoint/latest/userguide/migrate.html) | SMS, push notifications |
 
 Mnemonic: **see images → Rekognition; read documents → Textract; understand text → Comprehend; listen → Transcribe; speak → Polly; translate → Translate; chat → Lex; search → Kendra; recommend → Personalize; train your own → SageMaker; generative → Bedrock.**
+
+Sentiment analysis of multilingual support calls → Transcribe → Translate → Comprehend.
 
 ## Keyword lookup table
 
@@ -1031,6 +1177,9 @@ Read this in the last hour before the exam: see the description on the left, thi
 | Who called the API, who deleted the resource | CloudTrail |
 | Aggregate all security findings | Security Hub |
 | Download AWS compliance reports | Artifact |
+| Keys must stay outside AWS | KMS External Key Store |
+| On-prem servers need temporary AWS credentials | IAM Roles Anywhere |
+| Find unused permissions | IAM Access Analyzer |
 
 ### Networking and entry points
 
@@ -1073,6 +1222,8 @@ Read this in the last hour before the exam: see the description on the left, thi
 | No infrastructure management, upload code and deploy | Elastic Beanstalk |
 | Predictable traffic peaks | Scheduled scaling |
 | Manage instances without SSH | SSM Session Manager |
+| Java Lambda cold starts | SnapStart |
+| Guaranteed capacity in a specific AZ | On-Demand Capacity Reservation |
 
 ### Storage and databases
 
@@ -1108,6 +1259,10 @@ Read this in the last hour before the exam: see the description on the left, thi
 | Cassandra | Keyspaces |
 | Social graphs, recommendations, graph data | Neptune |
 | IoT time series | Timestream |
+| Keep EBS snapshots long term | EBS Snapshots Archive |
+| Recover deleted snapshots / AMIs | Recycle Bin |
+| HA MySQL / PostgreSQL with readable standbys | RDS Multi-AZ DB cluster |
+| SQL Server to PostgreSQL with few code changes | Babelfish for Aurora PostgreSQL |
 
 ### Integration, analytics and operations
 
@@ -1144,6 +1299,8 @@ Read this in the last hour before the exam: see the description on the left, thi
 | Analyze past spend | Cost Explorer |
 | Rightsizing + estimated savings | Compute Optimizer |
 | Find buckets without versioning, org-wide S3 analytics | S3 Storage Lens |
+| Process huge numbers of S3 objects in parallel | Step Functions Distributed Map |
+| Send events to an external HTTP API | EventBridge API destinations |
 
 ## Easily confused pairs and numbers to memorize
 
@@ -1177,6 +1334,9 @@ These are the combinations that most often lead to the wrong answer. For each, f
 | Dedicated Host vs Dedicated Instance | Host exposes physical sockets / cores (for licensing); Instance just isn't shared with others |
 | Organizations vs RAM | Organizations manages accounts and policies; RAM shares resources |
 | Shield Standard vs Advanced | Standard is free and automatic; Advanced is paid, layer 7, response team, cost protection |
+| Tag policy vs SCP | A tag policy governs tag values; blocking a missing tag needs an SCP |
+| Multi-AZ instance vs Multi-AZ DB cluster | The instance's standby can't serve reads; a DB cluster has 2 readable standbys and fails over faster |
+| Recycle Bin vs Snapshot Lock | Recycle Bin lets you recover after deletion; Snapshot Lock prevents deletion |
 
 ### Numbers to memorize
 
@@ -1211,6 +1371,16 @@ These are the combinations that most often lead to the wrong answer. For each, f
 | CloudTrail event history | 90 days |
 | EC2 basic / detailed monitoring | 5 minutes / 1 minute |
 | Global Accelerator static IPs | 2 Anycast IPs |
+| SQS FIFO deduplication window | 5 minutes |
+| KMS key deletion waiting period | 7-30 days |
+| RDS Multi-AZ DB cluster failover | Usually within 35 seconds |
+| Stopped RDS instance restarts itself | After 7 days |
+| S3 Lifecycle default minimum transition size | 128 KB (since 2024-09) |
+| WAF single IP set | Up to 10,000 CIDRs |
+| Fargate ephemeral storage | Up to 200 GiB |
+| Root user MFA devices | Up to 8 |
+| VPC CIDR size | /16 to /28 |
+| Public IPv4 charge | USD 0.005 per address per hour (since 2024-02) |
 
 ### Common wrong options (be suspicious on sight)
 
@@ -1225,10 +1395,12 @@ These are the combinations that most often lead to the wrong answer. For each, f
 - Blocking a specific IP with a Security Group (SGs can't Deny; use a NACL).
 - Storage Gateway for a one-off bulk move (use DataSync or Snowball).
 - RAM to restrict permissions, Inspector to calculate cost, Shield to patch: simply the wrong tool.
+- One ASG across two Regions, one subnet across two AZs, one EC2 instance with two IAM roles: none of these exist.
+- Running Windows containers on Lambda (Lambda container images are Linux only).
 
 ## Exam answers vs reality: service changes 2024-2026
 
-Most of the SAA-C03 question bank was written before these changes. In the exam, give the question bank's "standard answer"; this table is so you know reality has moved on and don't get tripped up mixing old and new. (Checked October 2026; follow the ↗ for each change's source.)
+Most of the SAA-C03 question bank was written before these changes. In the exam, give the question bank's "standard answer"; this table is so you know reality has moved on and don't get tripped up mixing old and new. (Checked November 2026; follow the ↗ for each change's source.)
 
 | Service / item | What exam questions say | Current state |
 | --- | --- | --- |
@@ -1254,6 +1426,17 @@ Most of the SAA-C03 question bank was written before these changes. In the exam,
 | Forecast, Fraud Detector | Forecasting, fraud detection | Closed to new customers (2024-07, 2025-11) [↗](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html) |
 | QuickSight | BI dashboards | Renamed Amazon Quick (the BI part is Quick Sight) [↗](https://aws.amazon.com/blogs/business-intelligence/reimagine-business-intelligence-amazon-quicksight-evolves-to-amazon-quick-suite) |
 | Kinesis Data Firehose | Stream delivery | Renamed Amazon Data Firehose |
+| Kinesis Data Analytics | Streaming SQL analytics | Renamed Managed Service for Apache Flink; the old SQL applications are discontinued |
+| Aurora Serverless v1 | Intermittent load, can pause | Ended 2025-03-31, use v2; v2 scales to 0 ACU since 2024-11 [↗](https://aws.amazon.com/about-aws/whats-new/2024/11/amazon-aurora-serverless-v2-scaling-zero-capacity) |
+| Scheduled Reserved Instances | Discount for fixed time windows | No longer sold; use Savings Plans or scheduled start/stop |
+| S3 Lifecycle and small objects | Any size can transition | Objects under 128 KB aren't transitioned by default (2024-09) [↗](https://aws.amazon.com/about-aws/whats-new/2024/09/amazon-s3-default-minimum-object-size-lifecycle-transition-rules) |
+| S3 Object Lambda | Transform or redact data on read | Closed to new customers (2025-11-07) [↗](https://docs.aws.amazon.com/AmazonS3/latest/userguide/amazons3-ol-change.html) |
+| Elastic Transcoder | Video transcoding | Discontinued (2025-11-13), use MediaConvert [↗](https://aws.amazon.com/blogs/media/support-for-amazon-elastic-transcoder-ending-soon) |
+| Pinpoint | SMS, push, marketing journeys | End of support (2026-10-30); messaging APIs continue as AWS End User Messaging [↗](https://docs.aws.amazon.com/pinpoint/latest/userguide/migrate.html) |
+| Inspector Classic | Agent-based EC2 scanning | End of support (2026-05-20); the new Inspector scans via the SSM Agent or agentlessly [↗](https://docs.aws.amazon.com/inspector/v1/userguide/inspector-migration.html) |
+| Public IPv4 | Only idle EIPs are billed | Every public IPv4 address is billed (2024-02) [↗](https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights) |
+| CloudFront OAI | Only CloudFront may read S3 | Legacy; use OAC |
+| EC2 Launch Configuration | ASG launch settings | New accounts can't create them; use Launch Templates |
 
 ## Sources
 
@@ -1273,3 +1456,10 @@ Most of the SAA-C03 question bank was written before these changes. In the exam,
 - [S3 Select no longer available to new customers](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html)
 - [QuickSight evolves into Amazon Quick Suite](https://aws.amazon.com/blogs/business-intelligence/reimagine-business-intelligence-amazon-quicksight-evolves-to-amazon-quick-suite)
 - [Timeline of retired AWS services and closures to new customers (compiled from official AWS announcements)](https://hidekazu-konishi.com/entry/aws_retired_services_history_and_timeline.html)
+- [S3 Lifecycle default minimum transition size 128 KB (2024-09)](https://aws.amazon.com/about-aws/whats-new/2024/09/amazon-s3-default-minimum-object-size-lifecycle-transition-rules)
+- [Aurora Serverless v2 scales to 0 ACU (2024-11)](https://aws.amazon.com/about-aws/whats-new/2024/11/amazon-aurora-serverless-v2-scaling-zero-capacity)
+- [S3 Object Lambda availability change](https://docs.aws.amazon.com/AmazonS3/latest/userguide/amazons3-ol-change.html)
+- [Elastic Transcoder end of service announcement](https://aws.amazon.com/blogs/media/support-for-amazon-elastic-transcoder-ending-soon)
+- [Amazon Pinpoint end of support](https://docs.aws.amazon.com/pinpoint/latest/userguide/migrate.html)
+- [Amazon Inspector Classic end of support](https://docs.aws.amazon.com/inspector/v1/userguide/inspector-migration.html)
+- [Public IPv4 address charge (2024-02)](https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights)
