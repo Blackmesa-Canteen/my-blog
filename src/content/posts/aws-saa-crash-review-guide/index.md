@@ -1167,7 +1167,7 @@ The earlier chapters map requirements to services, which is enough when a questi
 3. **Watch the current-state sentences**: "currently On-Demand", "a Lambda created in the console", "the bucket already has objects", "already has Direct Connect" usually point to what the answer must change or reuse.
 4. **Split stems with several datasets**: "processing data needs maximum I/O, results must be durable, old data archived" is three datasets, each matched separately (instance store, S3, Glacier).
 5. **Two goals in one stem** ("lowest cost and least operational overhead"): drop anything that fails either goal, then compare what's left. An option that is only cheaper through custom scripts or code changes loses when "least effort" is also asked.
-6. **Use the adjective last**: LEAST overhead favours managed, single-step options; MOST cost-effective favours just enough, not more (highly available alone doesn't need a second Region).
+6. **Use the adjective last**: LEAST overhead favours managed, single-step options; MOST cost-effective favours what just meets the requirements (highly available alone is met by Multi-AZ).
 7. **When information is missing**: pick the option that works without extra assumptions.
 
 Correct pairs in multiple-response questions usually take one of three shapes. Check that your two picks don't overlap and together cover every condition in the stem.
@@ -1225,11 +1225,11 @@ Each card compares a set of options that are often confused. The left column is 
 | Route by event content, AWS service events, call an external API, fewest components | EventBridge |
 | Several apps read the same data, replay, ordering per shard | Kinesis Data Streams |
 | Just deliver data into S3, Redshift, OpenSearch | Firehose |
-| Lambda processes the same message several times | Longer visibility timeout (not a switch to FIFO) |
+| Lambda processes the same message several times | A longer visibility timeout, longer than processing time |
 | The producer itself sends duplicates, strict ordering | SQS FIFO |
 
 - "Least overhead" plus content filtering: one EventBridge rule per target has fewer parts than SNS + several SQS queues + polling Lambdas. Pick SNS + SQS only when buffering or durability is asked for.
-- Writes must survive a database upgrade → SQS. RDS Proxy handles connections; it doesn't store writes.
+- Writes must survive a database upgrade → SQS holds the writes. RDS Proxy is for connection pooling and faster failover.
 
 **2. Slow reads, too many connections**
 
@@ -1249,7 +1249,7 @@ Each card compares a set of options that are often confused. The left column is 
 
 | Cue | Pick |
 | --- | --- |
-| Only "highly available, automatic failover" | Multi-AZ (no second Region needed) |
+| Only "highly available, automatic failover" | Multi-AZ (met within one Region) |
 | "Must also be readable in another Region" | Cross-Region Read Replica or Aurora Global Database |
 | Single writer, global reads, replication within 1 second | Aurora Global Database |
 | Writes in several Regions at once | DynamoDB Global Tables |
@@ -1266,20 +1266,20 @@ Each card compares a set of options that are often confused. The left column is 
 | Effectively no downtime | Multi-site Active/Active |
 
 - A specific service's real RPO beats the tier table. DRS is priced like Pilot Light but has an RPO in seconds.
-- "Doesn't need to serve traffic while the primary is healthy" → not Active/Active.
-- A CloudWatch alarm + Lambda rewriting DNS rebuilds what Route 53 health checks + failover routing already do.
+- "Doesn't need to serve traffic while the primary is healthy" → an active-passive design such as Pilot Light or Warm Standby.
+- DNS failover belongs to Route 53 health checks + failover routing.
 
 **5. When to scale**
 
 | Cue | Pick |
 | --- | --- |
-| A known time (before office hours, weekends), and you know how many instances | Scheduled scaling (set desired; don't set min = max) |
+| A known time (before office hours, weekends), and you know how many instances | Scheduled scaling (set desired, keep room between min and max) |
 | A regular pattern, but "nobody has time to analyse it" | Predictive scaling |
 | Unpredictable bursts within the day | Target tracking |
 | Working through a queue | Target tracking on backlog per instance |
 
-- "Only slow at the start of each day" → scale ahead of time; a lower threshold or shorter cooldown still reacts after the fact.
-- To save money, change the ASG's min, desired and max. Removing an instance from a target group still leaves it running and billed.
+- "Only slow at the start of each day" → scale ahead of time (scheduled or predictive).
+- To save money, adjust the ASG's min, desired and max; cost follows the number of running instances.
 
 **6. Compute platform**
 
@@ -1289,8 +1289,8 @@ Each card compares a set of options that are often confused. The left column is 
 | Over 15 minutes, already containerized, runs on a schedule | ECS Fargate scheduled task |
 | Long, massively parallel batch jobs in several languages | AWS Batch |
 | Large-scale format conversion (CSV → Parquet), least overhead | Glue ETL |
-| Containers + least overhead | ECS or an EKS managed node group, not containers on a self-run ASG |
-| Keep most of the existing code, split it across teams | Containerize onto ECS (Lambda or Amplify means a rewrite) |
+| Containers + least overhead | ECS or an EKS managed node group |
+| Keep most of the existing code, split it across teams | Containerize onto ECS; the code stays largely as is |
 
 **7. Purchase options**
 
@@ -1307,15 +1307,15 @@ Each card compares a set of options that are often confused. The left column is 
 | Cue | Pick |
 | --- | --- |
 | You know data goes cold after N days | Lifecycle rule (Intelligent-Tiering adds a monitoring fee) |
-| Access pattern unknown or changing | Intelligent-Tiering (don't enable the Archive tiers, or retrieval is no longer immediate) |
+| Access pattern unknown or changing | Intelligent-Tiering (default instant-access tiers only) |
 | Immediate access, occasional use, must not be lost | Standard-IA |
 | Immediate access, quarterly or less | Glacier Instant Retrieval |
 | Minutes to hours of waiting is fine | Glacier Flexible Retrieval |
 | Retrieval within 12 hours is fine | Glacier Deep Archive |
 
 - "Must not be lost", "can't be recreated", "highly available" → rule out One Zone-IA.
-- "Deliver GB-sized files within minutes" → an IA class. Expedited retrieval doesn't guarantee 1-5 minutes for large files.
-- Minimum storage durations are pro-rated charges, not a ban on early deletion. Glacier at day 30 and deletion at day 90 can still be cheaper than staying in Standard-IA.
+- "Deliver GB-sized files within minutes" → an IA class (millisecond retrieval).
+- Minimum storage durations are pro-rated: deleting early bills the remaining days. Glacier at day 30 and deletion at day 90 can still be cheaper than staying in Standard-IA.
 
 **9. Encryption and keys**
 
@@ -1341,7 +1341,7 @@ Each card compares a set of options that are often confused. The left column is 
 | No fixed period, "until the company decides" | Legal hold |
 | Backups must not be deletable | AWS Backup Vault Lock (compliance mode) |
 
-- Blocking deletion with an IAM or bucket policy isn't WORM; an administrator can change the policy.
+- WORM means Object Lock or Vault Lock; administrators can change IAM and bucket policies.
 
 **11. Moving data: work out the time first**
 
@@ -1351,8 +1351,8 @@ Each card compares a set of options that are often confused. The left column is 
 | Large, recurring, needs verification or bandwidth limits | DataSync |
 | Transfer would miss the deadline, or no spare bandwidth | Snowball |
 | Ongoing transfers without using internet bandwidth | Direct Connect (takes weeks to provision) |
-| On-prem apps keep using cloud storage afterwards | Storage Gateway (it's not a migration tool) |
-| Users worldwide uploading and downloading large, unique files | S3 Transfer Acceleration (every file differs, so CloudFront caching can't help) |
+| On-prem apps keep using cloud storage afterwards | Storage Gateway (long-term hybrid) |
+| Users worldwide uploading and downloading large, unique files | S3 Transfer Acceleration (speeds up the transfer itself through edge locations) |
 
 - Bandwidth math is under "Migration and transfer": 100 Mbps ≈ 1 TB a day.
 - Volume Gateway: "all data immediately available" → stored; limited local disk, keep only hot data → cached.
@@ -1368,8 +1368,8 @@ Each card compares a set of options that are often confused. The left column is 
 | On-prem apps accessing S3 | S3 File Gateway |
 | Partners transferring files over SFTP | Transfer Family (backed by S3 or EFS) |
 
-- When all clients are inside AWS, File Gateway isn't needed.
-- An option that requires "modifying the application" loses to one that does the same without changes.
+- When all clients are inside AWS → mount EFS or FSx directly.
+- When two options do the same job, pick the one that needs no application changes.
 
 **13. Front door**
 
@@ -1408,7 +1408,7 @@ SQS between the order service and shipping. Cue: "no order lost" + "later is fin
 <details>
 <summary>2. Users of a video platform upload source files and download their own files from around the world. Every file is different and transfers are slow.</summary>
 
-S3 Transfer Acceleration. Cue: every file is different, so CloudFront caching doesn't help.
+S3 Transfer Acceleration. Cue: every file is different, so the transfer itself needs speeding up.
 </details>
 
 <details>
@@ -1426,7 +1426,7 @@ S3 Object Lock compliance mode with a 7-year retention period. Cue: "root includ
 <details>
 <summary>5. A MySQL primary is slowed down by analysts' queries, and the application shouldn't change much.</summary>
 
-Create a Read Replica and point the analysts at it. Cue: the reads need to move elsewhere, not shrink.
+Create a Read Replica and point the analysts at it. Cue: the reads need to move elsewhere.
 </details>
 
 <details>
@@ -1474,7 +1474,7 @@ Turn on default encryption (new objects), then list unencrypted objects with S3 
 <details>
 <summary>13. A Lambda function consuming SQS sometimes processes the same order twice. The function timeout is 5 minutes and the queue's visibility timeout is the default.</summary>
 
-Raise the visibility timeout to 6 times the function timeout (30 minutes). Cue: the 30-second default is shorter than processing, so the message reappears; switching to FIFO isn't the fix.
+Raise the visibility timeout to 6 times the function timeout (30 minutes). Cue: the 30-second default is shorter than processing, so the message reappears before processing finishes.
 </details>
 
 <details>
@@ -1728,21 +1728,21 @@ These are the combinations that most often lead to the wrong answer. For each, f
 | VPC CIDR size | /16 to /28 |
 | Public IPv4 charge | USD 0.005 per address per hour (since 2024-02) |
 
-### Common wrong options (be suspicious on sight)
+### Common traps and the right choice
 
-- Running your own database, Kafka or cron on EC2 → there's usually a managed service.
-- Storing access keys on EC2, in code or in S3 → use an IAM role.
-- Deployed in a single AZ yet claimed to be highly available.
-- Using Lambda for work longer than 15 minutes.
-- Using a Read Replica for automatic failover (that's Multi-AZ).
-- Using Multi-AZ to improve read performance (that's a Read Replica).
-- WAF on an NLB or EC2 (WAF only attaches to CloudFront, ALB, API Gateway REST API, AppSync, Cognito user pool, App Runner, Amplify, Verified Access).
-- A CNAME at the zone apex (use an Alias).
-- Blocking a specific IP with a Security Group (SGs can't Deny; use a NACL).
-- Storage Gateway for a one-off bulk move (use DataSync or Snowball).
-- RAM to restrict permissions, Inspector to calculate cost, Shield to patch: simply the wrong tool.
-- One ASG across two Regions, one subnet across two AZs, one EC2 instance with two IAM roles: none of these exist.
-- Running Windows containers on Lambda (Lambda container images are Linux only).
+- Databases, Kafka, scheduled jobs → managed services (RDS / Aurora, MSK, EventBridge Scheduler).
+- Code accessing AWS → an IAM role (an instance profile on EC2).
+- High availability → at least two AZs.
+- Work longer than 15 minutes → Fargate, Batch or Step Functions.
+- Automatic failover → Multi-AZ.
+- Better read performance → a Read Replica or a cache.
+- Where WAF attaches → CloudFront, ALB, API Gateway REST API, AppSync, Cognito user pool, App Runner, Amplify, Verified Access.
+- Zone apex pointing at an AWS resource → a Route 53 Alias record.
+- Blocking specific IPs → NACL deny (or a WAF IP set).
+- One-off bulk moves → DataSync or Snowball; Storage Gateway is for long-term hybrid use.
+- Pick tools by their actual job: RAM shares resources, Inspector scans for vulnerabilities, Shield protects against DDoS.
+- Scope: an ASG lives in one Region, a subnet in one AZ, and an EC2 instance has one IAM role.
+- Windows containers → ECS (Lambda container images are Linux).
 
 ## Exam answers vs reality: service changes 2024-2026
 

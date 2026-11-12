@@ -1167,7 +1167,7 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 3. **注意現況描述**：「目前用 On-Demand」「在 console 建的 Lambda」「bucket 裡已經有物件」「已經有 Direct Connect」這類句子，通常就是答案要改、或要利用的地方。
 4. **一題多筆資料就拆開**：例如「處理中的資料要最高 I/O，成品要耐久，舊資料要封存」是三筆資料，各自對應（instance store、S3、Glacier）。
 5. **兩個目標同時出現**（「成本最低且維運最少」）：先刪掉任一目標不滿足的，再比剩下的。只靠自訂腳本或改程式才便宜的選項，遇到「最少工作量」就輸。
-6. **最後才用形容詞比**：LEAST overhead 選託管、一步到位的；MOST cost-effective 選夠用就好的，不要多建（只說高可用，就不必跨 Region）。
+6. **最後才用形容詞比**：LEAST overhead 選託管、一步到位的；MOST cost-effective 選剛好滿足需求的（只說高可用，Multi-AZ 就夠）。
 7. **資訊不夠時**：選不需要額外假設就成立的選項。
 
 複選題的正確組合通常是下面三種形狀之一。選完檢查兩個答案沒有重疊，而且合起來涵蓋題目的每個條件。
@@ -1225,11 +1225,11 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 依事件內容路由、AWS 服務事件、呼叫外部 API、元件要最少 | EventBridge |
 | 多個應用讀同一份資料、要重播、依 shard 保序 | Kinesis Data Streams |
 | 只要把資料送進 S3、Redshift、OpenSearch | Firehose |
-| 同一則訊息被 Lambda 處理好幾次 | 加長 visibility timeout（不是改用 FIFO） |
+| 同一則訊息被 Lambda 處理好幾次 | 加長 visibility timeout，讓它比處理時間長 |
 | 生產端自己重複送、要嚴格順序 | SQS FIFO |
 
 - 「最少維運」又要依內容過濾：每個目標一條 EventBridge rule，比 SNS + 多個 SQS + 輪詢的 Lambda 元件少。題目要求緩衝或持久性時才選 SNS + SQS。
-- 資料庫升級期間不能掉寫入 → SQS。RDS Proxy 只處理連線，不保存寫入。
+- 資料庫升級期間寫入要保留 → SQS 暫存寫入。RDS Proxy 負責連線池和加快 failover。
 
 **2. 讀取慢、連線多**
 
@@ -1249,7 +1249,7 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 
 | 線索 | 選 |
 | --- | --- |
-| 只說「高可用、自動 failover」 | Multi-AZ（不必跨 Region） |
+| 只說「高可用、自動 failover」 | Multi-AZ（單一 Region 內就滿足） |
 | 「另一個 Region 也要能讀」 | Cross-Region Read Replica 或 Aurora Global Database |
 | 單一 writer、全球讀取、複製 1 秒內 | Aurora Global Database |
 | 多個 Region 同時寫入 | DynamoDB Global Tables |
@@ -1266,20 +1266,20 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 幾乎不能停機 | Multi-site Active/Active |
 
 - 具體服務的實際 RPO 比層級表準。DRS 的價格像 Pilot Light，RPO 卻是秒級。
-- 「主要 Region 正常時不必服務流量」→ 不是 Active/Active。
-- 用 CloudWatch alarm + Lambda 改 DNS，等於在重做 Route 53 health check + failover routing。
+- 「主要 Region 正常時不必服務流量」→ Pilot Light 或 Warm Standby 這類主動-被動架構。
+- DNS 切換交給 Route 53 health check + failover routing。
 
 **5. 擴展的時機**
 
 | 線索 | 選 |
 | --- | --- |
-| 已知的時間點（上班前、週末），而且知道要幾台 | Scheduled scaling（調 desired，不要設 min = max） |
+| 已知的時間點（上班前、週末），而且知道要幾台 | Scheduled scaling（調整 desired，min 和 max 之間保留彈性） |
 | 有規律，但「沒人有空分析」 | Predictive scaling |
 | 一天內無法預測的突發 | Target tracking |
 | 依佇列處理工作 | 依每台的 backlog 做 target tracking |
 
-- 「只有每天一開始很慢」→ 要事前擴展；調低門檻、縮短冷卻時間都還是事後反應。
-- 要省錢就改 ASG 的 min、desired、max。只把 instance 從 target group 拿掉，機器照樣計費。
+- 「只有每天一開始很慢」→ 事前擴展（scheduled 或 predictive）。
+- 要省錢就調 ASG 的 min、desired、max，費用跟著執行中的 instance 數量走。
 
 **6. 運算平台**
 
@@ -1289,8 +1289,8 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 超過 15 分鐘、已容器化、定期執行 | ECS Fargate scheduled task |
 | 長時間、大量平行、多種語言的批次 | AWS Batch |
 | 大規模格式轉換（CSV → Parquet）、最少維運 | Glue ETL |
-| 容器 + 最少維運 | ECS 或 EKS managed node group，不要自己用 ASG 跑容器 |
-| 保留大部分既有程式碼、拆給不同團隊 | 容器化後放到 ECS（改用 Lambda、Amplify 等於重寫） |
+| 容器 + 最少維運 | ECS 或 EKS managed node group |
+| 保留大部分既有程式碼、拆給不同團隊 | 容器化後放到 ECS，程式碼大致不變 |
 
 **7. 購買方式**
 
@@ -1307,15 +1307,15 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 線索 | 選 |
 | --- | --- |
 | 知道放幾天後就少用 | Lifecycle rule（Intelligent-Tiering 有監控費） |
-| 存取模式未知或會變 | Intelligent-Tiering（不要開 Archive 層，否則就不是立即取回） |
+| 存取模式未知或會變 | Intelligent-Tiering（只用預設的即時存取層） |
 | 立即取回、偶爾用、不能遺失 | Standard-IA |
 | 立即取回、一季一次以下 | Glacier Instant Retrieval |
 | 可以等幾分鐘到幾小時 | Glacier Flexible Retrieval |
 | 12 小時內取回即可 | Glacier Deep Archive |
 
 - 「不能遺失」「無法重建」「高可用」→ 排除 One Zone-IA。
-- 「幾分鐘內交付 GB 等級的檔案」→ IA 類別。Expedited 對大檔不保證 1-5 分鐘。
-- 最短計費天數是按比例收費，不是禁止提早刪除。第 30 天轉 Glacier、第 90 天刪除，仍可能比一直放在 Standard-IA 便宜。
+- 「幾分鐘內交付 GB 等級的檔案」→ IA 類別（毫秒取回）。
+- 最短計費天數按比例收費：提早刪除就補收剩餘天數。第 30 天轉 Glacier、第 90 天刪除，仍可能比一直放在 Standard-IA 便宜。
 
 **9. 加密與金鑰**
 
@@ -1341,7 +1341,7 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 沒有期限，「直到公司決定」 | Legal hold |
 | 備份不能被刪 | AWS Backup Vault Lock（compliance mode） |
 
-- 用 IAM policy 或 bucket policy 擋刪除不算 WORM，管理員可以把 policy 改掉。
+- WORM 要用 Object Lock 或 Vault Lock；IAM policy 和 bucket policy 管理員可以修改。
 
 **11. 搬資料：先算時間**
 
@@ -1351,8 +1351,8 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 大量、定期、要驗證、要限頻寬 | DataSync |
 | 傳輸時間超過期限，或沒有多餘頻寬 | Snowball |
 | 長期持續傳輸、不想占用網際網路頻寬 | Direct Connect（要數週才拉得好） |
-| 地端應用之後還要繼續用雲端儲存 | Storage Gateway（它不是搬遷工具） |
-| 全球使用者上傳、下載各不相同的大檔 | S3 Transfer Acceleration（每個檔案都不同，CloudFront 快取幫不上） |
+| 地端應用之後還要繼續用雲端儲存 | Storage Gateway（長期混合架構） |
+| 全球使用者上傳、下載各不相同的大檔 | S3 Transfer Acceleration（經邊緣節點加速傳輸本身） |
 
 - 頻寬換算見〈遷移與傳輸〉：100 Mbps ≈ 每天 1 TB。
 - Volume Gateway：「所有資料都要立即可用」→ stored；本機空間有限、只留熱資料 → cached。
@@ -1368,8 +1368,8 @@ SAA 只考「哪個服務做哪件事」，不考模型細節。題目描述一�
 | 地端應用存取 S3 | S3 File Gateway |
 | 合作夥伴用 SFTP 傳檔 | Transfer Family（後端是 S3 或 EFS） |
 
-- 用戶端都在 AWS 裡時，不需要 File Gateway。
-- 要「修改應用程式」的選項，輸給功能相同但不用改的選項。
+- 用戶端都在 AWS 裡 → 直接掛載 EFS 或 FSx。
+- 兩個選項功能相同時，選不用修改應用程式的那個。
 
 **13. 流量入口**
 
@@ -1408,7 +1408,7 @@ SQS 放在訂單服務和出貨系統之間。線索：「不能少」+「晚點
 <details>
 <summary>2. 影音平台的使用者從世界各地上傳原始檔、下載自己的檔案，每個檔案都不一樣，速度很慢。</summary>
 
-S3 Transfer Acceleration。線索：每個檔案都不同，CloudFront 快取沒有用。
+S3 Transfer Acceleration。線索：每個檔案都不同，要加速的是傳輸本身。
 </details>
 
 <details>
@@ -1426,7 +1426,7 @@ S3 Object Lock compliance mode，retention period 7 年。線索：「包括 roo
 <details>
 <summary>5. MySQL 主資料庫被分析師的查詢拖慢，應用程式不想大改。</summary>
 
-建 Read Replica，分析師改連 replica。線索：要的是把讀取分出去，不是減少讀取。
+建 Read Replica，分析師改連 replica。線索：要把讀取分出去。
 </details>
 
 <details>
@@ -1474,7 +1474,7 @@ SCP（用 instance type 條件拒絕）。線索：「禁止」+「包括 root�
 <details>
 <summary>13. Lambda 處理 SQS 訊息時，偶爾同一筆訂單被處理兩次。函式 timeout 是 5 分鐘，佇列的 visibility timeout 是預設值。</summary>
 
-把 visibility timeout 調到函式 timeout 的 6 倍（30 分鐘）。線索：預設 30 秒比處理時間短，訊息又出現了；不是改用 FIFO。
+把 visibility timeout 調到函式 timeout 的 6 倍（30 分鐘）。線索：預設 30 秒比處理時間短，訊息在處理完之前又出現了。
 </details>
 
 <details>
@@ -1728,21 +1728,21 @@ Lambda function URL，auth type 設 `AWS_IAM`。線索：單一函式 + 沒有 A
 | VPC CIDR 大小 | /16 到 /28 |
 | 公有 IPv4 費用 | 每個每小時 0.005 美元（2024-02 起） |
 
-### 常見錯誤選項（看到就先懷疑）
+### 常見陷阱的正確做法
 
-- 在 EC2 上自己架資料庫、自己架 Kafka、自己寫 cron → 通常有託管服務可替代。
-- 把 access key 存在 EC2、程式碼或 S3 → 改用 IAM role。
-- 只部署在單一 AZ 卻號稱高可用。
-- 用 Lambda 處理超過 15 分鐘的工作。
-- 用 Read Replica 做自動 failover（要 Multi-AZ）。
-- 用 Multi-AZ 來提升讀取效能（要 Read Replica）。
-- WAF 掛在 NLB 或 EC2 上（WAF 只能掛 CloudFront、ALB、API Gateway REST API、AppSync、Cognito user pool、App Runner、Amplify、Verified Access）。
-- 用 CNAME 指向根網域（要用 Alias）。
-- 用 Security Group 封鎖特定 IP（SG 不能 Deny，要用 NACL）。
-- 用 Storage Gateway 做一次性大量搬移（要 DataSync 或 Snowball）。
-- 用 RAM 限制權限、用 Inspector 算成本、用 Shield 打補丁：功能根本不對。
-- 一個 ASG 跨兩個 Region、一個 subnet 跨兩個 AZ、一台 EC2 掛兩個 IAM role：都不存在。
-- 用 Lambda 跑 Windows 容器（Lambda 的容器映像只支援 Linux）。
+- 資料庫、Kafka、排程 → 託管服務（RDS / Aurora、MSK、EventBridge Scheduler）。
+- 程式存取 AWS → IAM role（EC2 用 instance profile）。
+- 高可用 → 至少兩個 AZ。
+- 超過 15 分鐘的工作 → Fargate、Batch 或 Step Functions。
+- 自動 failover → Multi-AZ。
+- 提升讀取效能 → Read Replica 或快取。
+- WAF 的掛載點 → CloudFront、ALB、API Gateway REST API、AppSync、Cognito user pool、App Runner、Amplify、Verified Access。
+- 根網域指向 AWS 資源 → Route 53 Alias record。
+- 封鎖特定 IP → NACL deny（或 WAF IP set）。
+- 一次性大量搬移 → DataSync 或 Snowball；Storage Gateway 用於長期混合架構。
+- 選工具先看它的本業：RAM 分享資源、Inspector 掃描漏洞、Shield 防 DDoS。
+- 範圍：ASG 在單一 Region 內、subnet 在單一 AZ 內、一台 EC2 掛一個 IAM role。
+- Windows 容器 → ECS（Lambda 的容器映像是 Linux）。
 
 ## 考題 vs 現況：2024-2026 服務變動總表
 
