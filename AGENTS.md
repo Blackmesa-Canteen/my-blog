@@ -22,7 +22,10 @@ categories: string[] # optional, defaults to []
 tags: string[]       # optional, defaults to []
 cover: image         # optional, relative path to an image next to index.md
 original_permalink: string # optional — only set on posts migrated from the old Halo site, never on new posts
+ai_assisted: boolean # optional, defaults to false — set true when AI helped write the post
 ```
+
+The flag picks the provenance wording (in `PROVENANCE` in `src/lib/site.ts`): an italic label in post lists ("AI 辅助 AI assisted", or "古法写作 Handcrafted" when false), and a full note at the top of every post. AI-assisted posts' RSS descriptions also start with the AI label. Any post Claude helps write gets `ai_assisted: true`.
 
 Reflective/personal (non-technical) posts typically use `categories: [Random]`, `tags: [Random]`.
 
@@ -34,7 +37,8 @@ The authentic voice on this blog (see `migrating-off-halo-to-astro-and-cloudflar
 - Generic listicle headers ("Conclusion", "The Promise / The Risk")
 - Forced wrap-up paragraphs that just restate the post
 - Fake personas, bylines, or signed sign-offs (a past cleanup — see git history and PR #13 — removed a batch of AI-generated posts with fake personas like "Ocelot"/"Eva" and a repeated "Pretty good." catchphrase)
-- Claude as a commit/PR co-author, or AI-generated disclaimers inside post content — the author doesn't want either
+- Claude as a commit/PR co-author — the author doesn't want it
+- AI disclaimers written into the post body — use the `ai_assisted` frontmatter flag instead
 
 ### Sensitive or politically-charged topics
 

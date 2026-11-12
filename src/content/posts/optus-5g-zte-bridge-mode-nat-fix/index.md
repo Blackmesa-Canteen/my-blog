@@ -8,6 +8,7 @@ tags:
 - Network
 - Optus
 - IPv6
+ai_assisted: true
 ---
 
 [中文版在下面](#中文版)

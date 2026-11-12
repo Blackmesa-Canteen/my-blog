@@ -4,6 +4,7 @@ title: 'Bitcoin''s Uncomfortable Truths: Why the Institutional Narrative Might B
 slug: bitcoin-uncomfortable-truths
 date: '2026-02-04T11:17:11.103715251Z'
 original_permalink: /archives/bitcoin-uncomfortable-truths
+ai_assisted: true
 ---
 
 # Bitcoin's Uncomfortable Truths: Why the Institutional Narrative Might Be Wrong

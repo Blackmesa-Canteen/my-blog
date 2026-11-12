@@ -4,6 +4,7 @@ title: 'The New Titans of Treasury Markets: Stablecoins and Their Impact on Fina
 slug: stablecoins-treasury-2026
 date: '2026-03-08T23:04:01.349297050Z'
 original_permalink: /archives/stablecoins-treasury-2026
+ai_assisted: true
 ---
 
 ### The New Titans of Treasury Markets: Stablecoins and Their Impact on Financial Systems in 2026

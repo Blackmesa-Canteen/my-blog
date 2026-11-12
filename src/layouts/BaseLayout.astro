@@ -367,6 +367,17 @@ const travellings = { href: 'https://www.travellings.cn/go.html', title: '开往
   .post-list-item:has(h2 a:focus-visible) { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
   .post-list-item:hover h2 a { color: var(--accent-strong); }
   .post-list-item .post-meta a, .post-list-item .tag { position: relative; z-index: 1; }
+  /* Italic to set it apart from the category; sits above the title link's overlay so its tooltip works. */
+  .provenance-label { position: relative; z-index: 1; cursor: help; white-space: nowrap; font-style: italic; }
+  .provenance-label .bi-en { font-size: 0.85em; }
+  .provenance-note {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.5rem;
+    margin: 0 0 1.5rem; padding: 0.1rem 0 0.1rem 0.75rem;
+    border-left: 3px solid var(--highlight);
+    color: var(--muted); font-size: 0.9em; font-style: italic;
+  }
+  .post-meta + .provenance-note { margin-top: -0.75rem; }
+  .provenance-note .bi-en { font-size: 0.9em; font-weight: 400; }
   .post-list-item h2 {
     margin: 0 0 0.2rem;
     padding-bottom: 0;

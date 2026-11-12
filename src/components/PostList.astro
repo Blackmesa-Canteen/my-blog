@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { getExcerpt, termHref } from '../lib/posts';
+import ProvenanceLabel from './ProvenanceLabel.astro';
 
 interface Props {
   posts: CollectionEntry<'posts'>[];
@@ -21,6 +22,8 @@ const { posts } = Astro.props;
               <a href={termHref('categories', category)}>{category}</a>
             </>
           ))}
+          <span aria-hidden="true"> · </span>
+          <ProvenanceLabel aiAssisted={post.data.ai_assisted} />
         </p>
         {excerpt && <p class="post-excerpt">{excerpt}</p>}
         {post.data.tags.length > 0 && (

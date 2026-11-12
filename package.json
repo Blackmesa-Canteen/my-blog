@@ -6,6 +6,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "blog": "node scripts/blog.mjs",
+    "test:blog": "node --test scripts/blog.test.mjs",
     "dev": "astro dev",
     "build": "astro build",
     "postbuild": "pagefind --site dist",
@@ -13,18 +15,18 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/markdown-satteri": "^0.4.5",
+    "@astrojs/markdown-satteri": "^0.4.7",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.4.0",
-    "satteri": "^0.10.5"
+    "astro": "^7.4.7",
+    "satteri": "^0.11.6"
   },
   "allowScripts": {
     "esbuild": true,
     "workerd@1.20260911.1": true
   },
   "devDependencies": {
-    "pagefind": "^1.5.2",
-    "wrangler": "^4.134.0"
+    "pagefind": "^1.6.0",
+    "wrangler": "^4.158.0"
   }
 }

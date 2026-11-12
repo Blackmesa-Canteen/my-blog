@@ -8,6 +8,7 @@ tags:
 - Development
 - Astro
 - Cloudflare
+ai_assisted: true
 ---
 
 For a few years this blog ran on [Halo](https://github.com/halo-dev/halo), a

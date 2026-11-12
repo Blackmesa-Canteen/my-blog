@@ -8,6 +8,7 @@ categories:
 tags:
 - AWS
 - Notes
+ai_assisted: true
 ---
 
 > English version: [AWS SAA Crash Review Guide](/posts/aws-saa-crash-review-guide/)

@@ -3,6 +3,7 @@ title: 'Shader Compilation: Nvidia''s Band-Aid on a Self-Inflicted Wound'
 slug: shader-compilation-nvidia-band-aid
 date: '2026-04-01T23:14:00.470506781Z'
 original_permalink: /archives/shader-compilation-nvidia-band-aid
+ai_assisted: true
 ---
 
 # Shader Compilation: Nvidia's Band-Aid on a Self-Inflicted Wound
