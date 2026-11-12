@@ -48,10 +48,10 @@ Sources: [KodeKloud SAA-C03 exam guide notes](https://notes.kodekloud.com/docs/A
 
 ### General rules of thumb
 
-- The answer is usually an AWS managed service, rarely "run it yourself on EC2".
-- "Cron job on EC2" is almost always wrong; replace it with EventBridge Scheduler + Lambda.
-- "Put the access key in the code or on the instance" is always wrong; use an IAM role.
-- Options full of manual steps or hand-written polling scripts → usually a trap.
+- The answer is usually an AWS managed service.
+- Scheduled jobs → EventBridge Scheduler + Lambda.
+- Code that accesses AWS → an IAM role.
+- Automation first: event triggers (EventBridge, S3 events) and managed features, with as few steps as possible.
 
 ## Identity and account governance
 
@@ -1158,16 +1158,16 @@ The earlier chapters map requirements to services, which is enough when a questi
 
 - On each decision card, cover the right column, answer from the cues on the left, then check. Mark the cards you get wrong and look at them again the next day.
 - The self-test is deliberately not grouped by topic. Mixed practice trains you to tell similar options apart, which is exactly what scenario questions test (interleaving). Commit to an answer before expanding.
-- Skim the "details that don't exist" list again right before the exam. In the exam, the fastest win is deleting a wrong option, not comparing two right ones.
+- Skim the "hard constraints for eliminating options" again right before the exam. In the exam, the fastest win is deleting an option that contradicts a fact, not comparing two right ones.
 
 ### Procedure: eliminate, then compare
 
-1. **Delete options with a wrong detail**: one clause that isn't true (a feature that doesn't exist, something in the wrong place, a limit exceeded) sinks the whole option, however sensible the rest is. Common wrong details are in the next section.
+1. **Delete options with a wrong detail**: one clause that isn't true (a feature that doesn't exist, something in the wrong place, a limit exceeded) sinks the whole option, however sensible the rest is. The constraints to check against are in the next section.
 2. **Explicit numbers and verbs come first**: "rotate every year", "retrieve within 12 hours", "RPO of 30 seconds", "single writer", "all data immediately available" outrank the DR tier table and the adjective.
 3. **Watch the current-state sentences**: "currently On-Demand", "a Lambda created in the console", "the bucket already has objects", "already has Direct Connect" usually point to what the answer must change or reuse.
 4. **Split stems with several datasets**: "processing data needs maximum I/O, results must be durable, old data archived" is three datasets, each matched separately (instance store, S3, Glacier).
 5. **Two goals in one stem** ("lowest cost and least operational overhead"): drop anything that fails either goal, then compare what's left. An option that is only cheaper through custom scripts or code changes loses when "least effort" is also asked.
-6. **Use the adjective last**: LEAST overhead favours managed, single-step options; MOST cost-effective favours just enough, not more (highly available alone doesn't need a second Region).
+6. **Use the adjective last**: LEAST overhead favours managed, single-step options; MOST cost-effective favours what just meets the requirements (highly available alone is met by Multi-AZ).
 7. **When information is missing**: pick the option that works without extra assumptions.
 
 Correct pairs in multiple-response questions usually take one of three shapes. Check that your two picks don't overlap and together cover every condition in the stem.
@@ -1178,37 +1178,38 @@ Correct pairs in multiple-response questions usually take one of three shapes. C
 | One per tier | One for the database + one for compute; one to receive + one to process |
 | Prevent + remediate | EBS encryption by default + SCP denying unencrypted volumes; Intelligent-Tiering + aborting incomplete multipart uploads |
 
-### Details that don't exist
+### Hard constraints for eliminating options
 
-If an option says any of these, delete it.
+Facts to check options against. If an option's description doesn't match these, delete it.
 
-| What the option says | What's actually true |
+| Item | Fact |
 | --- | --- |
-| A gateway endpoint placed in an AZ, or with a security group | It belongs to route tables, has no AZ, and takes no SG |
-| One ASG across Regions, one subnet across AZs | Neither is possible |
-| Two IAM roles on one EC2 instance, or a policy attached directly to an instance | One role, through one instance profile |
-| Deny rules in a security group | SGs only allow |
-| Referencing the peer's SG across cross-Region peering | Use the CIDR |
-| Turning on encryption for an existing RDS instance or EBS volume | Snapshot → encrypted copy → restore to a new one |
-| Restoring a snapshot onto an existing RDS instance | A restore always creates a new instance |
-| RDS event notifications catching row changes | They only report operational events (failover, backups, etc.) |
-| A Multi-AZ DB cluster for Oracle, SQL Server or MariaDB | MySQL and PostgreSQL only |
-| Two primaries in an Aurora Global Database | One writer Region |
-| Data Lifecycle Manager backing up RDS | It handles EBS snapshots and AMIs only |
-| WAF on an NLB or Global Accelerator, or WAF as a forwarding hop | WAF is associated with CloudFront, ALB, API Gateway and similar resources |
-| Snowball importing straight into FSx | Land in S3, then link FSx for Lustre to the bucket |
-| Firehose writing to DynamoDB | Firehose has no such destination |
-| Native S3 notifications to SQS FIFO or SageMaker | Native notifications go to SNS, SQS Standard, Lambda; anything else via EventBridge |
-| Lambda running longer than 15 minutes, or Windows containers | Neither is possible |
-| Sharing Savings Plans through RAM, reselling Savings Plans | Use discount sharing; only Standard RIs can be sold on the Marketplace |
-| ACM issuing a third-party CA's certificate, a custom certificate on a function URL | Get third-party certificates signed elsewhere and import them; function URLs don't support custom domains |
-| Lifecycle to IA before 30 days, or a transition dated after expiry | IA needs at least 30 days; transitioning after deletion is meaningless |
-| A legal hold with a retention period | Legal holds have no period; use a retention period for that |
-| A tag policy blocking missing tags, an SCP adding tags | Block missing tags with an SCP; add tags with EventBridge + Lambda |
-| Scheduling with Session Manager | Schedule with State Manager, Automation or EventBridge Scheduler |
-| HTML reports by SNS email | SNS email is plain text; use SES for HTML |
-| STS issuing SSH keys | STS issues temporary IAM credentials; keyless login is Session Manager |
-| API keys as an authorization mechanism | API keys are for metering and throttling; authorize with IAM, Cognito or a Lambda authorizer |
+| Gateway endpoint | Attached to route tables, belongs to no AZ, has no security group |
+| ASG, subnet | An ASG lives in one Region; a subnet lives in one AZ |
+| IAM permissions for EC2 | One role, through one instance profile |
+| Security group | Allow rules only; deny with a NACL |
+| Cross-Region peering | SG rules use the peer's CIDR |
+| Encrypting existing RDS or EBS | Snapshot → encrypted copy → restore to a new one |
+| Restoring an RDS snapshot | Always creates a new instance |
+| RDS event notifications | Report operational events: failover, backups, maintenance |
+| Multi-AZ DB cluster | Supports MySQL and PostgreSQL |
+| Aurora Global Database | One writer Region; the other Regions are read-only |
+| Data Lifecycle Manager | Handles EBS snapshots and AMIs; RDS backups use AWS Backup |
+| WAF | Associated with CloudFront, ALB, API Gateway, AppSync, Cognito and similar resources; Global Accelerator and NLB are protected by Shield Advanced |
+| Snowball and FSx | Import into S3 first, then link FSx for Lustre to the bucket |
+| Firehose destinations | S3, Redshift, OpenSearch, Splunk, HTTP endpoints and more; to write DynamoDB use Data Streams + Lambda |
+| Native S3 event notifications | Targets are SNS, SQS Standard and Lambda; anything else goes through EventBridge |
+| Lambda | 15 minutes max; container images are Linux |
+| Savings Plans | Shared across the org with discount sharing; Standard RIs are what can be resold on the Marketplace |
+| Third-party CA certificates | Signed elsewhere, then imported into ACM |
+| Lambda function URL | Uses an AWS-generated URL and certificate; for a custom domain use API Gateway or CloudFront |
+| Lifecycle to IA | Objects must be 30 days old to transition; transitions come before expiration |
+| Legal hold | Stays in effect until removed; for a fixed period use a retention period |
+| Governing tags | A tag policy governs values; blocking creation without a tag is an SCP (`aws:RequestTag`); adding tags automatically is EventBridge + Lambda |
+| Scheduling operations | State Manager, Automation or EventBridge Scheduler; Session Manager is for logging in |
+| HTML email | SES; SNS email is plain text |
+| STS | Issues temporary IAM credentials; keyless instance login is Session Manager |
+| API Gateway API keys | For metering and throttling; authorize with IAM, Cognito or a Lambda authorizer |
 
 ### Decision cards
 
@@ -1224,11 +1225,11 @@ Each card compares a set of options that are often confused. The left column is 
 | Route by event content, AWS service events, call an external API, fewest components | EventBridge |
 | Several apps read the same data, replay, ordering per shard | Kinesis Data Streams |
 | Just deliver data into S3, Redshift, OpenSearch | Firehose |
-| Lambda processes the same message several times | Longer visibility timeout (not a switch to FIFO) |
+| Lambda processes the same message several times | A longer visibility timeout, longer than processing time |
 | The producer itself sends duplicates, strict ordering | SQS FIFO |
 
 - "Least overhead" plus content filtering: one EventBridge rule per target has fewer parts than SNS + several SQS queues + polling Lambdas. Pick SNS + SQS only when buffering or durability is asked for.
-- Writes must survive a database upgrade → SQS. RDS Proxy handles connections; it doesn't store writes.
+- Writes must survive a database upgrade → SQS holds the writes. RDS Proxy is for connection pooling and faster failover.
 
 **2. Slow reads, too many connections**
 
@@ -1248,7 +1249,7 @@ Each card compares a set of options that are often confused. The left column is 
 
 | Cue | Pick |
 | --- | --- |
-| Only "highly available, automatic failover" | Multi-AZ (no second Region needed) |
+| Only "highly available, automatic failover" | Multi-AZ (met within one Region) |
 | "Must also be readable in another Region" | Cross-Region Read Replica or Aurora Global Database |
 | Single writer, global reads, replication within 1 second | Aurora Global Database |
 | Writes in several Regions at once | DynamoDB Global Tables |
@@ -1265,20 +1266,20 @@ Each card compares a set of options that are often confused. The left column is 
 | Effectively no downtime | Multi-site Active/Active |
 
 - A specific service's real RPO beats the tier table. DRS is priced like Pilot Light but has an RPO in seconds.
-- "Doesn't need to serve traffic while the primary is healthy" → not Active/Active.
-- A CloudWatch alarm + Lambda rewriting DNS rebuilds what Route 53 health checks + failover routing already do.
+- "Doesn't need to serve traffic while the primary is healthy" → an active-passive design such as Pilot Light or Warm Standby.
+- DNS failover belongs to Route 53 health checks + failover routing.
 
 **5. When to scale**
 
 | Cue | Pick |
 | --- | --- |
-| A known time (before office hours, weekends), and you know how many instances | Scheduled scaling (set desired; don't set min = max) |
+| A known time (before office hours, weekends), and you know how many instances | Scheduled scaling (set desired, keep room between min and max) |
 | A regular pattern, but "nobody has time to analyse it" | Predictive scaling |
 | Unpredictable bursts within the day | Target tracking |
 | Working through a queue | Target tracking on backlog per instance |
 
-- "Only slow at the start of each day" → scale ahead of time; a lower threshold or shorter cooldown still reacts after the fact.
-- To save money, change the ASG's min, desired and max. Removing an instance from a target group still leaves it running and billed.
+- "Only slow at the start of each day" → scale ahead of time (scheduled or predictive).
+- To save money, adjust the ASG's min, desired and max; cost follows the number of running instances.
 
 **6. Compute platform**
 
@@ -1288,8 +1289,8 @@ Each card compares a set of options that are often confused. The left column is 
 | Over 15 minutes, already containerized, runs on a schedule | ECS Fargate scheduled task |
 | Long, massively parallel batch jobs in several languages | AWS Batch |
 | Large-scale format conversion (CSV → Parquet), least overhead | Glue ETL |
-| Containers + least overhead | ECS or an EKS managed node group, not containers on a self-run ASG |
-| Keep most of the existing code, split it across teams | Containerize onto ECS (Lambda or Amplify means a rewrite) |
+| Containers + least overhead | ECS or an EKS managed node group |
+| Keep most of the existing code, split it across teams | Containerize onto ECS; the code stays largely as is |
 
 **7. Purchase options**
 
@@ -1306,15 +1307,15 @@ Each card compares a set of options that are often confused. The left column is 
 | Cue | Pick |
 | --- | --- |
 | You know data goes cold after N days | Lifecycle rule (Intelligent-Tiering adds a monitoring fee) |
-| Access pattern unknown or changing | Intelligent-Tiering (don't enable the Archive tiers, or retrieval is no longer immediate) |
+| Access pattern unknown or changing | Intelligent-Tiering (default instant-access tiers only) |
 | Immediate access, occasional use, must not be lost | Standard-IA |
 | Immediate access, quarterly or less | Glacier Instant Retrieval |
 | Minutes to hours of waiting is fine | Glacier Flexible Retrieval |
 | Retrieval within 12 hours is fine | Glacier Deep Archive |
 
 - "Must not be lost", "can't be recreated", "highly available" → rule out One Zone-IA.
-- "Deliver GB-sized files within minutes" → an IA class. Expedited retrieval doesn't guarantee 1-5 minutes for large files.
-- Minimum storage durations are pro-rated charges, not a ban on early deletion. Glacier at day 30 and deletion at day 90 can still be cheaper than staying in Standard-IA.
+- "Deliver GB-sized files within minutes" → an IA class (millisecond retrieval).
+- Minimum storage durations are pro-rated: deleting early bills the remaining days. Glacier at day 30 and deletion at day 90 can still be cheaper than staying in Standard-IA.
 
 **9. Encryption and keys**
 
@@ -1340,7 +1341,7 @@ Each card compares a set of options that are often confused. The left column is 
 | No fixed period, "until the company decides" | Legal hold |
 | Backups must not be deletable | AWS Backup Vault Lock (compliance mode) |
 
-- Blocking deletion with an IAM or bucket policy isn't WORM; an administrator can change the policy.
+- WORM means Object Lock or Vault Lock; administrators can change IAM and bucket policies.
 
 **11. Moving data: work out the time first**
 
@@ -1350,8 +1351,8 @@ Each card compares a set of options that are often confused. The left column is 
 | Large, recurring, needs verification or bandwidth limits | DataSync |
 | Transfer would miss the deadline, or no spare bandwidth | Snowball |
 | Ongoing transfers without using internet bandwidth | Direct Connect (takes weeks to provision) |
-| On-prem apps keep using cloud storage afterwards | Storage Gateway (it's not a migration tool) |
-| Users worldwide uploading and downloading large, unique files | S3 Transfer Acceleration (every file differs, so CloudFront caching can't help) |
+| On-prem apps keep using cloud storage afterwards | Storage Gateway (long-term hybrid) |
+| Users worldwide uploading and downloading large, unique files | S3 Transfer Acceleration (speeds up the transfer itself through edge locations) |
 
 - Bandwidth math is under "Migration and transfer": 100 Mbps ≈ 1 TB a day.
 - Volume Gateway: "all data immediately available" → stored; limited local disk, keep only hot data → cached.
@@ -1367,8 +1368,8 @@ Each card compares a set of options that are often confused. The left column is 
 | On-prem apps accessing S3 | S3 File Gateway |
 | Partners transferring files over SFTP | Transfer Family (backed by S3 or EFS) |
 
-- When all clients are inside AWS, File Gateway isn't needed.
-- An option that requires "modifying the application" loses to one that does the same without changes.
+- When all clients are inside AWS → mount EFS or FSx directly.
+- When two options do the same job, pick the one that needs no application changes.
 
 **13. Front door**
 
@@ -1407,7 +1408,7 @@ SQS between the order service and shipping. Cue: "no order lost" + "later is fin
 <details>
 <summary>2. Users of a video platform upload source files and download their own files from around the world. Every file is different and transfers are slow.</summary>
 
-S3 Transfer Acceleration. Cue: every file is different, so CloudFront caching doesn't help.
+S3 Transfer Acceleration. Cue: every file is different, so the transfer itself needs speeding up.
 </details>
 
 <details>
@@ -1425,7 +1426,7 @@ S3 Object Lock compliance mode with a 7-year retention period. Cue: "root includ
 <details>
 <summary>5. A MySQL primary is slowed down by analysts' queries, and the application shouldn't change much.</summary>
 
-Create a Read Replica and point the analysts at it. Cue: the reads need to move elsewhere, not shrink.
+Create a Read Replica and point the analysts at it. Cue: the reads need to move elsewhere.
 </details>
 
 <details>
@@ -1473,7 +1474,7 @@ Turn on default encryption (new objects), then list unencrypted objects with S3 
 <details>
 <summary>13. A Lambda function consuming SQS sometimes processes the same order twice. The function timeout is 5 minutes and the queue's visibility timeout is the default.</summary>
 
-Raise the visibility timeout to 6 times the function timeout (30 minutes). Cue: the 30-second default is shorter than processing, so the message reappears; switching to FIFO isn't the fix.
+Raise the visibility timeout to 6 times the function timeout (30 minutes). Cue: the 30-second default is shorter than processing, so the message reappears before processing finishes.
 </details>
 
 <details>
@@ -1727,21 +1728,21 @@ These are the combinations that most often lead to the wrong answer. For each, f
 | VPC CIDR size | /16 to /28 |
 | Public IPv4 charge | USD 0.005 per address per hour (since 2024-02) |
 
-### Common wrong options (be suspicious on sight)
+### Common traps and the right choice
 
-- Running your own database, Kafka or cron on EC2 → there's usually a managed service.
-- Storing access keys on EC2, in code or in S3 → use an IAM role.
-- Deployed in a single AZ yet claimed to be highly available.
-- Using Lambda for work longer than 15 minutes.
-- Using a Read Replica for automatic failover (that's Multi-AZ).
-- Using Multi-AZ to improve read performance (that's a Read Replica).
-- WAF on an NLB or EC2 (WAF only attaches to CloudFront, ALB, API Gateway REST API, AppSync, Cognito user pool, App Runner, Amplify, Verified Access).
-- A CNAME at the zone apex (use an Alias).
-- Blocking a specific IP with a Security Group (SGs can't Deny; use a NACL).
-- Storage Gateway for a one-off bulk move (use DataSync or Snowball).
-- RAM to restrict permissions, Inspector to calculate cost, Shield to patch: simply the wrong tool.
-- One ASG across two Regions, one subnet across two AZs, one EC2 instance with two IAM roles: none of these exist.
-- Running Windows containers on Lambda (Lambda container images are Linux only).
+- Databases, Kafka, scheduled jobs → managed services (RDS / Aurora, MSK, EventBridge Scheduler).
+- Code accessing AWS → an IAM role (an instance profile on EC2).
+- High availability → at least two AZs.
+- Work longer than 15 minutes → Fargate, Batch or Step Functions.
+- Automatic failover → Multi-AZ.
+- Better read performance → a Read Replica or a cache.
+- Where WAF attaches → CloudFront, ALB, API Gateway REST API, AppSync, Cognito user pool, App Runner, Amplify, Verified Access.
+- Zone apex pointing at an AWS resource → a Route 53 Alias record.
+- Blocking specific IPs → NACL deny (or a WAF IP set).
+- One-off bulk moves → DataSync or Snowball; Storage Gateway is for long-term hybrid use.
+- Pick tools by their actual job: RAM shares resources, Inspector scans for vulnerabilities, Shield protects against DDoS.
+- Scope: an ASG lives in one Region, a subnet in one AZ, and an EC2 instance has one IAM role.
+- Windows containers → ECS (Lambda container images are Linux).
 
 ## Exam answers vs reality: service changes 2024-2026
 
